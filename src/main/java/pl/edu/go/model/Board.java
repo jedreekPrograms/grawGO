@@ -6,7 +6,7 @@ public class Board {
     private final int size;
     private final Color[][] grid;
 
-    public Board(int size, Color[][] grid) {
+    public Board(int size) {
         this.size = size;
         this.grid = new Color[size][size];
 
