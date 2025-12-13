@@ -1,4 +1,4 @@
-package client;
+package pl.edu.go.client;
 
 import pl.edu.go.model.Board;
 import pl.edu.go.model.Color;

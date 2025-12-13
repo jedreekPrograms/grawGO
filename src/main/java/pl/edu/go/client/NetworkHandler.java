@@ -1,4 +1,4 @@
-package client;
+package pl.edu.go.client;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
