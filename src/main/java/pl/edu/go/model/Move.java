@@ -13,6 +13,10 @@ public class Move {
         this.color = color;
     }
 
+    public Type getType() { return type; }
+    public Point getPos() { return pos; }
+    public Color getColor() { return color; }
+
     @Override
     public String toString() {
         switch (type) {
