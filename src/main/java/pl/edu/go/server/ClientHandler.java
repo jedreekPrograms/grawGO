@@ -5,6 +5,7 @@ import pl.edu.go.server.networkInterfaces.MessageListener;
 import pl.edu.go.model.Color;
 import pl.edu.go.model.Move;
 import pl.edu.go.model.Point;
+import pl.edu.go.server.GameSession;
 
 import java.io.*;
 import java.net.Socket;
@@ -17,6 +18,7 @@ public class ClientHandler implements Runnable, ClientConnection {
     private PrintWriter out;
     private MessageListener listener;
     private ClientConnection partner;
+    private GameSession session;
     private Color assignedColor;
 
 
@@ -33,13 +35,25 @@ public class ClientHandler implements Runnable, ClientConnection {
     }
 
     @Override
+    public void setGameSession(GameSession session, Color color) {
+        this.session = session;
+        this.assignedColor = color;
+        // poinformuj klienta jaki kolor dostał i że sesja jest gotowa
+        send("START " + color.name());
+    }
+
+    @Override
     public void run() {
         try {
             String msg;
             while ((msg = in.readLine()) != null) {
                 // Przekaż komunikat do sesji, jeśli jest przypisana
-                // Można logować lub reagować wstępnie
-                System.out.println("Wiadomość przed przypisaniem do sesji: " + msg);
+                if (session != null) {
+                    session.onMessage(this, msg);
+                } else {
+                    // Można logować lub reagować wstępnie
+                    System.out.println("Wiadomość przed przypisaniem do sesji: " + msg);
+                }
             }
         } catch (IOException e) {
             System.out.println("Klient rozłączony: " + socket);
