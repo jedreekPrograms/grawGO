@@ -22,6 +22,13 @@ public class GoClient {
         this.ui = new ConsoleUI(new Scanner(System.in));
     }
 
+    // konstruktor testowy
+    GoClient(ServerAPI api, ConsoleUI ui) {
+        this.api = api;
+        this.ui = ui;
+    }
+
+
     public void run() {
         api.setMessageListener(new MessageListener() {
             @Override
