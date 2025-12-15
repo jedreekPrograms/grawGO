@@ -41,6 +41,23 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>server</id>
+            <properties>
+                <exec.mainClass>pl.edu.go.server.MatchmakingServer</exec.mainClass>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>client</id>
+            <properties>
+                <exec.mainClass>pl.edu.go.client.GoClient</exec.mainClass>
+            </properties>
+        </profile>
+    </profiles>
+
+
     <build>
         <plugins>
             <plugin>
@@ -51,7 +68,15 @@
                     <mainClass>twoja.paczka.Main</mainClass>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version> 3.1.0</version>
+            </plugin>
         </plugins>
+
+
     </build>
 
 </project>
