@@ -187,7 +187,7 @@ public class GameSession {
         return null;
     }
 
-    private ClientConnection getOpponent(ClientConnection c) {
+    protected ClientConnection getOpponent(ClientConnection c) {
         return c == whitePlayer ? blackPlayer : whitePlayer;
     }
 
