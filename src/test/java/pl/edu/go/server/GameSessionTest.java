@@ -1,51 +1,66 @@
 package pl.edu.go.server;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import org.junit.*;
 import pl.edu.go.model.Color;
-import pl.edu.go.server.commandInterfaces.CommandRegistry;
-import pl.edu.go.server.commandInterfaces.MoveCommand;
+
+import pl.edu.go.server.commandInterfaces.*;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 
-import static org.junit.jupiter.api.Assertions.*;
 
-class GameSessionTest {
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
-    private GameSession session;
-    private MockClientConnection player1;
-    private MockClientConnection player2;
+public class GameSessionTest {
+
+
+    private ClientConnection white;
+    private ClientConnection black;
     private CommandRegistry registry;
+    private GameSession session;
 
-    @BeforeEach
-    void setUp() {
-        player1 = new MockClientConnection();
-        player2 = new MockClientConnection();
+
+    @Before
+    public void setup() {
+        white = mock(ClientConnection.class);
+        black = mock(ClientConnection.class);
         registry = new CommandRegistry();
         registry.register("MOVE", new MoveCommand());
-        session = new GameSession(player1, player2, 19, registry);
-        session.start();
-        session.getClientByColor(Color.WHITE).setGameSession(session, Color.WHITE);
-        session.getClientByColor(Color.BLACK).setGameSession(session, Color.BLACK);
+        registry.register("PASS", new PassCommand());
+        registry.register("RESIGN", new ResignCommand());
+        session = new GameSession(white, black, 9, registry);
     }
 
-    @Test
-    void testPlayerColors() {
-        assertEquals(Color.WHITE, session.getPlayerColor(player1));
-        assertEquals(Color.BLACK, session.getPlayerColor(player2));
-    }
 
     @Test
-    void testHandleCommandMove() {
-        // gracz WHITE zaczyna
-        boolean result = session.handleCommand("MOVE", new String[]{"0","0"}, player1);
-        assertTrue(result);
-        assertTrue(player1.messages.contains("VALID") || player1.messages.contains("START WHITE"));
-        assertTrue(player2.messages.stream().anyMatch(m -> m.startsWith("OPPONENT_MOVED")));
+    public void testPlayerColorsAssigned() {
+        assertEquals(Color.WHITE, session.getPlayerColor(white));
+        assertEquals(Color.BLACK, session.getPlayerColor(black));
     }
 
+
     @Test
-    void testHandleCommandPass() {
-        session.handleCommand("PASS", new String[]{}, player1);
-        assertTrue(player1.messages.contains("VALID") || player1.messages.contains("START WHITE"));
+    public void testMoveOutOfTurnRejected() {
+        session.onMessage(white, "MOVE 1 1");
+        verify(white).send(startsWith("ERROR"));
+    }
+
+
+    @Test
+    public void testValidMoveNotifiesOpponent() {
+        session.start(); // BLACK starts
+        session.onMessage(black, "MOVE 2 2");
+        verify(black).send("VALID");
+        verify(white).send("OPPONENT_MOVED 2 2");
+    }
+
+
+    @Test
+    public void testResignEndsSession() {
+        session.onMessage(black, "RESIGN");
+        verify(black).send(contains("RESIGN"));
+        verify(white).send(contains("WINNER"));
+        verify(white).close();
+        verify(black).close();
     }
 }

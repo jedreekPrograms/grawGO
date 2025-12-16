@@ -1,20 +1,23 @@
 package pl.edu.go.server.commandInterfaces;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+import pl.edu.go.server.CommandRegistry;
+import pl.edu.go.server.GameCommand;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertSame;
+import static org.mockito.Mockito.mock;
 
-class CommandRegistryTest {
+public class CommandRegistryTest {
+
 
     @Test
-    void testRegisterAndGetCommand() {
+    public void testRegisterAndGet() {
         CommandRegistry registry = new CommandRegistry();
-        GameCommand dummyCommand = (args, session, sender) -> true;
+        GameCommand command = mock(GameCommand.class);
 
-        registry.register("MOVE", dummyCommand);
 
-        assertEquals(dummyCommand, registry.get("MOVE"));
-        assertEquals(dummyCommand, registry.get("move")); // case insensitive
-        assertNull(registry.get("UNKNOWN"));
+        registry.register("MOVE", command);
+        assertSame(command, registry.get("MOVE"));
+        assertSame(command, registry.get("move"));
     }
 }

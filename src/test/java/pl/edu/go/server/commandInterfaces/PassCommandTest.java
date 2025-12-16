@@ -1,38 +1,30 @@
 package pl.edu.go.server.commandInterfaces;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import pl.edu.go.model.Color;
 import pl.edu.go.server.GameSession;
-import pl.edu.go.server.MockClientConnection;
+import pl.edu.go.server.PassCommand;
+import pl.edu.go.server.networkInterfaces.ClientConnection;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.*;
 
-class PassCommandTest {
+public class PassCommandTest {
 
-    private PassCommand passCommand;
-    private GameSession session;
-    private MockClientConnection player1;
-    private MockClientConnection player2;
-
-    @BeforeEach
-    void setUp() {
-        passCommand = new PassCommand();
-        player1 = new MockClientConnection();
-        player2 = new MockClientConnection();
-        CommandRegistry registry = new CommandRegistry();
-        registry.register("PASS", passCommand);
-        session = new GameSession(player1, player2, 9, registry);
-
-        // poprawiona kolejność
-        player1.setGameSession(session, Color.WHITE);
-        player2.setGameSession(session, Color.BLACK);
-    }
 
     @Test
-    void testExecutePass() {
-        boolean result = passCommand.execute(new String[]{}, session, player1);
+    public void testPassCommand() {
+        PassCommand cmd = new PassCommand();
+        GameSession session = mock(GameSession.class);
+        ClientConnection sender = mock(ClientConnection.class);
+
+
+        when(session.getPlayerColor(sender)).thenReturn(Color.BLACK);
+        when(session.getGame()).thenReturn(new pl.edu.go.model.GameState(9));
+
+
+        boolean result = cmd.execute(new String[]{}, session, sender);
         assertTrue(result);
-        assertTrue(player1.lastMessage.startsWith("PASS"));
+        verify(session).sendToBoth("PASS BLACK");
     }
 }
