@@ -2,7 +2,7 @@ package pl.edu.go.server.commandInterfaces;
 
 import org.junit.Test;
 import pl.edu.go.server.GameSession;
-import pl.edu.go.server.MoveCommand;
+
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 
 import static org.junit.Assert.assertFalse;

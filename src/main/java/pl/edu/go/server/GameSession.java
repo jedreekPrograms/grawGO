@@ -191,7 +191,7 @@ public class GameSession {
         return c == whitePlayer ? blackPlayer : whitePlayer;
     }
 
-    private ClientConnection getClientByColor(Color color) {
+    ClientConnection getClientByColor(Color color) {
         return color == Color.WHITE ? whitePlayer : blackPlayer;
     }
 

@@ -17,6 +17,9 @@ public class GoClient {
     private Color myColor = null;
     private boolean running = true;
 
+
+
+
     public GoClient(String host, int port) throws IOException {
         this.api = new SocketServerAPI(host, port);
         this.ui = new ConsoleUI(new Scanner(System.in));

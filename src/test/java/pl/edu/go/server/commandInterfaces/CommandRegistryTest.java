@@ -1,8 +1,7 @@
 package pl.edu.go.server.commandInterfaces;
 
 import org.junit.Test;
-import pl.edu.go.server.CommandRegistry;
-import pl.edu.go.server.GameCommand;
+
 
 import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.mock;
