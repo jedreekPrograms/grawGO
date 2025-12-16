@@ -4,17 +4,17 @@ Prosty program napisany w technologii klient-serwer w języku Java. Obsługuje p
 
 ## Instrukcja gry
 
-Gracze graja poprzez wpisywanie tekstowo komend, które wysyłane są na serwer.
-Obecnie serwer rozpoznaje następujące komendy:
-**Move x y** - kładzie kamień na pozycji x,y na planszy jeśli to możliwe
-**Pass** - pomija ture
-**Resign** - poddaje gre
+Gracze graja poprzez wpisywanie tekstowo komend, które wysyłane są na serwer.  
+Obecnie serwer rozpoznaje następujące komendy:  
+- **Move x y** - kładzie kamień na pozycji x,y na planszy jeśli to możliwe  
+- **Pass** - pomija ture  
+- **Resign** - poddaje gre  
 
 ## Działanie programu
 
 Pozwala na wiele rozgrywek między dwoma klientami jednocześnie. Gracze są parowani w kolejności w jakiej połączą się z serwerem. Komunikacja odbuwa się za pomocą protokołu TCP. Po wyslaniu komendy klienci otrzymuja adekwatna odpowiedz serwera wraz z zaktualizowanym stanem planszy gry.
 
-## ruchamianie
+## Uruchamianie
 
 mvn compile
 
@@ -26,6 +26,6 @@ java -cp target/classes pl.edu.go.client.GoClient
 
 ## Użyte technologie
 
-Java
-Maven
-Unij
+- Java  
+- Maven  
+- Junit
