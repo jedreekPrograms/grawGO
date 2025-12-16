@@ -5,7 +5,10 @@ import pl.edu.go.model.Move;
 import pl.edu.go.model.MoveFactory;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
-
+/**
+ * Komenda rezygnacji (pass) w grze Go.
+ * Gracz rezygnuje z wykonania ruchu w danej turze.
+ */
 public class PassCommand implements GameCommand {
 
     private final MoveFactory moveFactory = new MoveFactory();

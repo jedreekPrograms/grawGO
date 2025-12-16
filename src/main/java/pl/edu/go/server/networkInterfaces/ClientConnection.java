@@ -4,23 +4,39 @@ import java.net.Socket;
 import pl.edu.go.model.Color;
 import pl.edu.go.server.GameSession;
 
-//Interfejs do komunikacji serwera z klientem
+
+/**
+ * Interfejs do komunikacji serwera z klientem.
+ * Abstrahuje implementacje sieciowe (np. TCP).
+ */
 public interface ClientConnection {
 
-    // wysyła wiadomość do klienta
+    /**
+     * Wysyła wiadomość do klienta.
+     */
     void send(String message);
-
-    //to zmienilem!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // rejestruje listener odbierający wiadomości od klienta
+    /**
+     * Rejestruje listener odbierający wiadomości od klienta.
+     */
     void setMessageListener(MessageListener listener);
 
-    // zwraca identyfikator klienta lub nazwę
+
+    /**
+     * Zwraca gniazdo sieciowe klienta.
+     */
     Socket getSocket();
 
-    // zamknięcie połączenia
+    /**
+     * Zamknięcie połączenia klienta.
+     */
     void close();
-
+    /**
+     * Ustawia partnera klienta
+     */
     void setPartner(ClientConnection partner);
 
+    /**
+     * Przypisuje klienta do sesji gry oraz koloru.
+     */
     void setGameSession(GameSession session, Color color);
 }

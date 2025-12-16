@@ -6,6 +6,10 @@ import pl.edu.go.model.MoveFactory;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 
+/**
+ * Komenda poddania się (resign) w grze Go.
+ * Gracz rezygnuje, przeciwnik zostaje zwycięzcą.
+ */
 public class ResignCommand implements GameCommand {
 
     private final MoveFactory moveFactory = new MoveFactory();
@@ -19,9 +23,10 @@ public class ResignCommand implements GameCommand {
         Move move = moveFactory.createResign(loser);
         session.getGame().applyMove(move);
 
+        // Powiadomienie obu graczy o wyniku
         session.sendToBoth("RESIGN " + loser);
         session.sendToBoth("WINNER " + winner);
-
+        // Zakończenie sesji
         session.endSession();
         return true;
     }

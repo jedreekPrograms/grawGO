@@ -11,7 +11,10 @@ import pl.edu.go.model.Color;
 import pl.edu.go.model.Board;
 
 import java.util.Objects;
-
+/**
+ * Klasa reprezentująca sesję gry Go między dwoma graczami.
+ * Odpowiada za stan gry, kolejność ruchów, obsługę komend i komunikację z klientami.
+ */
 public class GameSession {
 
     private final ClientConnection whitePlayer;
@@ -20,7 +23,7 @@ public class GameSession {
     private boolean sessionEnded = false;
     private final CommandRegistry registry;
 
-    // NOWE:
+    // Fabryka ruchów do tworzenia obiektów Move
     private final MoveFactory moveFactory = new MoveFactory();
 
     public GameSession(ClientConnection whitePlayer, ClientConnection blackPlayer, int boardSize, CommandRegistry registry) {
@@ -29,13 +32,19 @@ public class GameSession {
         this.game = new GameState(boardSize);
         this.registry = registry;
     }
-
+    /**
+     * Rozpoczęcie gry – wysyła planszę i informuje gracza, który ma pierwszy ruch.
+     */
     public void start() {
         sendBoardToBoth();
         ClientConnection black = getClientByColor(Color.BLACK);
         if (black != null) black.send("YOUR_TURN");
     }
-
+    /**
+     * Główna metoda obsługi komunikatów od graczy.
+     * @param sender klient wysyłający wiadomość
+     * @param message treść wiadomości
+     */
     public synchronized void onMessage(ClientConnection sender, String message) {
         if (sessionEnded) {
             sender.send("ERROR Session ended");
@@ -95,7 +104,6 @@ public class GameSession {
 
         Point pos = new Point(x, y);
 
-        // ❗ FABRYKA
         Move m = moveFactory.createPlace(pos, color);
 
         synchronized (game) {
@@ -119,7 +127,6 @@ public class GameSession {
 
     private void handlePass(ClientConnection sender, Color color) {
 
-        // ❗ FABRYKA
         Move m = moveFactory.createPass(color);
 
         synchronized (game) {
@@ -191,7 +198,7 @@ public class GameSession {
         return c == whitePlayer ? blackPlayer : whitePlayer;
     }
 
-    ClientConnection getClientByColor(Color color) {
+    private ClientConnection getClientByColor(Color color) {
         return color == Color.WHITE ? whitePlayer : blackPlayer;
     }
 

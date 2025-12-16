@@ -10,7 +10,10 @@ import pl.edu.go.server.GameSession;
 import java.io.*;
 import java.net.Socket;
 
-//Domyslna implementacja komunikacji z klientem i obslugi klientow
+/**
+ * Domyślna implementacja ClientConnection.
+ * Obsługuje klienta w osobnym wątku i komunikację TCP.
+ */
 public class ClientHandler implements Runnable, ClientConnection {
 
     private final Socket socket;
@@ -47,11 +50,10 @@ public class ClientHandler implements Runnable, ClientConnection {
         try {
             String msg;
             while ((msg = in.readLine()) != null) {
-                // Przekaż komunikat do sesji, jeśli jest przypisana
                 if (session != null) {
+                    // Przekazanie wiadomości do sesji
                     session.onMessage(this, msg);
                 } else {
-                    // Można logować lub reagować wstępnie
                     System.out.println("Wiadomość przed przypisaniem do sesji: " + msg);
                 }
             }
@@ -70,8 +72,6 @@ public class ClientHandler implements Runnable, ClientConnection {
     public void setPartner(ClientConnection partner) {
         this.partner = partner;
     }
-
-
 
     @Override
     public void send(String msg) {
