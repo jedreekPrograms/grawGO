@@ -1,0 +1,14 @@
+pl\edu\go\client\networkInterfaces\ServerAPITest.class
+pl\edu\go\model\ColorTest.class
+pl\edu\go\model\PointTest.class
+pl\edu\go\server\commandInterfaces\CommandRegistryTest.class
+pl\edu\go\model\MoveFactoryTest.class
+pl\edu\go\model\BoardTest.class
+pl\edu\go\client\GoClientTest.class
+pl\edu\go\client\ConsoleUITest.class
+pl\edu\go\server\commandInterfaces\MoveCommandTest.class
+pl\edu\go\server\commandInterfaces\PassCommandTest.class
+pl\edu\go\model\BoardBuilderTest.class
+pl\edu\go\server\commandInterfaces\ResignCommandTest.class
+pl\edu\go\model\GameStateTest.class
+pl\edu\go\model\MoveTest.class
