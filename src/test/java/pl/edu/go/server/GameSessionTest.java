@@ -1,24 +1,18 @@
 package pl.edu.go.server;
 
-
 import org.junit.*;
 import pl.edu.go.model.Color;
-
 import pl.edu.go.server.commandInterfaces.*;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 
-
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class GameSessionTest {
-
 
     private ClientConnection white;
     private ClientConnection black;
     private CommandRegistry registry;
     private GameSession session;
-
 
     @Before
     public void setup() {
@@ -31,13 +25,11 @@ public class GameSessionTest {
         session = new GameSession(white, black, 9, registry);
     }
 
-
     @Test
     public void testPlayerColorsAssigned() {
-        assertEquals(Color.WHITE, session.getPlayerColor(white));
-        assertEquals(Color.BLACK, session.getPlayerColor(black));
+        Assert.assertEquals(Color.WHITE, session.getPlayerColor(white));
+        Assert.assertEquals(Color.BLACK, session.getPlayerColor(black));
     }
-
 
     @Test
     public void testMoveOutOfTurnRejected() {
@@ -45,19 +37,25 @@ public class GameSessionTest {
         verify(white).send(startsWith("ERROR"));
     }
 
-
     @Test
     public void testValidMoveNotifiesOpponent() {
         session.start(); // BLACK starts
         session.onMessage(black, "MOVE 2 2");
-        verify(black).send("VALID");
-        verify(white).send("OPPONENT_MOVED 2 2");
+
+        // Nadawca (BLACK) dostaje wiadomości o wykonanym ruchu i planszy
+        verify(black).send(contains("MOVE BLACK 2 2"));
+        verify(black, atLeastOnce()).send(contains("BOARD"));
+
+        // Oponent (WHITE) dostaje wiadomości o ruchu przeciwnika i planszy
+        verify(white).send(contains("MOVE BLACK 2 2"));
+        verify(white, atLeastOnce()).send(contains("BOARD"));
     }
 
 
     @Test
     public void testResignEndsSession() {
         session.onMessage(black, "RESIGN");
+
         verify(black).send(contains("RESIGN"));
         verify(white).send(contains("WINNER"));
         verify(white).close();

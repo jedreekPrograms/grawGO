@@ -1,13 +1,35 @@
 package pl.edu.go.client.networkInterfaces;
-//Interfejs do komunikacji klienta z serwerem(do dokończenia)
+
+/**
+ * Interfejs abstrakcyjny do komunikacji klienta z serwerem Go.
+ *
+ * <p>
+ * Implementacje tego interfejsu odpowiadają za:
+ * <ul>
+ *     <li>wysyłanie wiadomości do serwera</li>
+ *     <li>odbieranie wiadomości od serwera przez listener</li>
+ *     <li>zamknięcie połączenia</li>
+ * </ul>
+ * </p>
+ */
 public interface ServerAPI {
 
-    // wysyła wiadomość do serwera
+    /**
+     * Wysyła wiadomość do serwera.
+     *
+     * @param message tekst wiadomości
+     */
     void send(String message);
 
-    // rejestruje listener odbierający wiadomości z serwera
+    /**
+     * Rejestruje listener odbierający wiadomości z serwera.
+     *
+     * @param listener obiekt implementujący {@link MessageListener}
+     */
     void setMessageListener(MessageListener listener);
 
-    // zamknięcie połączenia
+    /**
+     * Zamyka połączenie z serwerem.
+     */
     void close();
 }

@@ -1,20 +1,39 @@
 package pl.edu.go.model;
 
-
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-
-
+/**
+ * Klasa przechowująca aktualny stan gry.
+ * Odpowiada za planszę, tury graczy,
+ * liczbę zbitych kamieni oraz zakończenie gry.
+ */
 public class GameState {
+
+    /** Aktualna plansza gry. */
     private final Board board;
+
+    /** Kolor gracza, który wykonuje następny ruch. */
     private Color nextToMove;
+
+    /** Liczba kamieni zbitych przez czarnego gracza. */
     private int blackCaptures;
+
+    /** Liczba kamieni zbitych przez białego gracza. */
     private int whiteCaptures;
+
+    /** Historia hashy planszy używana do wykrywania powtórzeń pozycji. */
     private final Deque<Integer> historyHashes;
+
+    /** Informacja, czy gra została zakończona. */
     private boolean gameOver;
 
+    /**
+     * Tworzy nowy stan gry dla planszy o podanym rozmiarze.
+     * Czarny gracz rozpoczyna grę.
+     *
+     * @param size rozmiar planszy
+     */
     public GameState(int size) {
         this.board = new Board(size);
         this.nextToMove = Color.BLACK;
@@ -25,12 +44,38 @@ public class GameState {
         this.gameOver = false;
     }
 
-    public Board getBoard() { return board; }
-    public Color getNextToMove() { return nextToMove; }
-    public int getBlackCaptures() { return blackCaptures; }
-    public int getWhiteCaptures() { return whiteCaptures; }
-    public boolean isGameOver() { return gameOver; }
+    /** @return aktualna plansza */
+    public Board getBoard() {
+        return board;
+    }
 
+    /** @return kolor gracza, który ma wykonać ruch */
+    public Color getNextToMove() {
+        return nextToMove;
+    }
+
+    /** @return liczba kamieni zbitych przez czarnego */
+    public int getBlackCaptures() {
+        return blackCaptures;
+    }
+
+    /** @return liczba kamieni zbitych przez białego */
+    public int getWhiteCaptures() {
+        return whiteCaptures;
+    }
+
+    /** @return true jeśli gra jest zakończona */
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    /**
+     * Próbuje zastosować ruch do aktualnego stanu gry.
+     *
+     * @param move ruch do wykonania
+     * @return true jeśli ruch został wykonany poprawnie,
+     *         false jeśli ruch jest nielegalny lub gra jest zakończona
+     */
     public boolean applyMove(Move move) {
         if (gameOver) return false;
 
@@ -40,7 +85,12 @@ public class GameState {
                     return false;
                 }
 
-                int captured = board.placeStone(move.getColor(), move.getPos().x, move.getPos().y);
+                int captured = board.placeStone(
+                        move.getColor(),
+                        move.getPos().x,
+                        move.getPos().y
+                );
+
                 if (captured < 0) return false;
 
                 if (move.getColor() == Color.BLACK) {
@@ -50,7 +100,6 @@ public class GameState {
                 }
 
                 historyHashes.add(board.computeHash());
-
                 nextToMove = nextToMove.opponent();
                 return true;
 

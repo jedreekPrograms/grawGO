@@ -1,6 +1,10 @@
 package pl.edu.go.model;
 
-public class MoveFactory implements MoveAbstractFactory{
+/**
+ * Konkretna implementacja fabryki ruchów.
+ */
+public class MoveFactory implements MoveAbstractFactory {
+
     @Override
     public Move createPlace(Point pos, Color c) {
         return new Move(Move.Type.PLACE, pos, c);

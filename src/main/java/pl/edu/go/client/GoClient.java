@@ -10,28 +10,67 @@ import pl.edu.go.model.Point;
 import java.io.IOException;
 import java.util.Scanner;
 
+/**
+ * Klasa reprezentująca klienta gry Go działającego w konsoli.
+ *
+ * <p>
+ * GoClient łączy się z serwerem, odbiera komunikaty dotyczące stanu gry,
+ * wyświetla planszę i komunikaty graczowi oraz wysyła jego ruchy do serwera.
+ * </p>
+ *
+ * <p>
+ * Klient utrzymuje lokalną kopię planszy (localBoard) w celu wyświetlania w konsoli.
+ * Logika gry, weryfikacja ruchów i aktualizacja stanu są wykonywane po stronie serwera.
+ * </p>
+ */
 public class GoClient {
+
+    /** Abstrakcja połączenia z serwerem. */
     private final ServerAPI api;
+
+    /** Konsolowy interfejs użytkownika do wyświetlania planszy i pobierania ruchów. */
     private final ConsoleUI ui;
+
+    /** Lokalna kopia planszy dla wyświetlania w UI. */
     private Board localBoard;
+
+    /** Kolor gracza przypisany przez serwer. */
     private Color myColor = null;
+
+    /** Flaga sterująca główną pętlą klienta. */
     private boolean running = true;
 
-
-
-
+    /**
+     * Tworzy klienta Go i łączy go z serwerem pod podanym hostem i portem.
+     *
+     * @param host adres serwera
+     * @param port port serwera
+     * @throws IOException jeśli połączenie z serwerem nie powiedzie się
+     */
     public GoClient(String host, int port) throws IOException {
         this.api = new SocketServerAPI(host, port);
         this.ui = new ConsoleUI(new Scanner(System.in));
     }
 
-    // konstruktor testowy
+    /**
+     * Konstruktor testowy pozwalający wstrzyknąć własne API serwera i UI.
+     *
+     * @param api interfejs serwera
+     * @param ui interfejs użytkownika
+     */
     GoClient(ServerAPI api, ConsoleUI ui) {
         this.api = api;
         this.ui = ui;
     }
 
-
+    /**
+     * Uruchamia klienta w trybie konsoli.
+     *
+     * <p>
+     * Pętla główna klienta pobiera ruchy od gracza za pomocą {@link ConsoleUI} i wysyła je do serwera.
+     * Odbiera też wiadomości z serwera i aktualizuje lokalną planszę.
+     * </p>
+     */
     public void run() {
         api.setMessageListener(new MessageListener() {
             @Override
@@ -60,11 +99,20 @@ public class GoClient {
             }
         }
 
-        // zamknięcie dopiero po zakończeniu gry
         api.close();
         scanner.close();
     }
 
+    /**
+     * Obsługuje wiadomość otrzymaną z serwera.
+     *
+     * <p>
+     * W zależności od typu wiadomości aktualizuje lokalną planszę, wyświetla komunikaty
+     * graczowi lub kończy grę.
+     * </p>
+     *
+     * @param message wiadomość otrzymana od serwera
+     */
     private void handleServerMessage(String message) {
         if (message == null) return;
         message = message.trim();
@@ -146,6 +194,11 @@ public class GoClient {
         System.out.println("Server: " + message);
     }
 
+    /**
+     * Uruchamiany programowo punkt wejścia dla klienta.
+     *
+     * @param args argumenty: [host] [port]
+     */
     public static void main(String[] args) {
         String host = "localhost";
         int port = 5000;
