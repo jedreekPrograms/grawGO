@@ -6,7 +6,7 @@ Prosty program napisany w technologii klient-serwer w języku Java. Obsługuje p
 
 Gracze graja poprzez wpisywanie tekstowo komend, które wysyłane są na serwer.  
 Obecnie serwer rozpoznaje następujące komendy:  
-- **Move x y** - kładzie kamień na pozycji x,y na planszy jeśli to możliwe; koordynaty liczone sa od lewego górnego rogu planszy 
+- **x y** - kładzie kamień na pozycji x,y na planszy jeśli to możliwe; koordynaty liczone sa od lewego górnego rogu planszy 
 - **Pass** - pomija ture  
 - **Resign** - poddaje gre  
 
