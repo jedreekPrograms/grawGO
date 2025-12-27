@@ -7,6 +7,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import pl.edu.go.model.Color;
@@ -29,6 +30,7 @@ public class GoBoardDemo extends Application {
     private boolean myTurn = false;
 
     private Label turnLabel;
+    private Label colorLabel;
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -44,6 +46,11 @@ public class GoBoardDemo extends Application {
         turnLabel = new Label("Waiting for opponent...");
         turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 10;");
 
+        colorLabel = new Label("Your Color: ❓");
+        colorLabel.setStyle("-fx-font-size: 16px; -fx-padding: 10;");
+
+        HBox infoBox = new HBox(20, colorLabel, turnLabel);
+
         canvas.setOnMouseClicked(e -> {
             if (!myTurn) return;
 
@@ -55,12 +62,13 @@ public class GoBoardDemo extends Application {
 
             client.sendMove(x, y);
             myTurn = false;
+            updateTurnLabel();
         });
 
         drawBoard();
 
         BorderPane root = new BorderPane();
-        root.setTop(turnLabel);
+        root.setTop(infoBox);
         root.setCenter(new StackPane(canvas));
         
         stage.setScene(new Scene(root));
@@ -76,16 +84,30 @@ public class GoBoardDemo extends Application {
         if (msg.startsWith("START")) {
             myColor = Color.valueOf(msg.split(" ")[1]);
             System.out.println("Mój kolor: " + myColor);
+
+
+
+            Platform.runLater(() -> {
+                if (myColor == Color.BLACK) {
+                    colorLabel.setText("Your Color: Czarny"); // czarny ornament
+                    colorLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: black; -fx-padding: 10;"); // czarny
+                } else {
+                    colorLabel.setText("Your Color: Biały"); // biały ornament
+                    colorLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: silver; -fx-padding: 10;"); // srebrny
+                }
+            });
+
+
             myTurn = (myColor == Color.BLACK);
             updateTurnLabel();
             return;
         }
 
-        if (msg.equals("YOUR_TURN")) {
-            myTurn = true;
-            updateTurnLabel();
-            return;
-        }
+//        if (msg.equals("YOUR_TURN")) {
+//            myTurn = true;
+//            updateTurnLabel();
+//            return;
+//        }
 
         if (msg.startsWith("MOVE")) {
             String[] p = msg.split(" ");
@@ -94,11 +116,7 @@ public class GoBoardDemo extends Application {
             int y = Integer.parseInt(p[3]);
             board[x][y] = c;
             redraw();
-            if (c != myColor) {
-                myTurn = true; // teraz moja tura
-            } else {
-                myTurn = false; // po moim ruchu teraz przeciwnik
-            }
+
             myTurn = (c != myColor); // jeśli przeciwnik wykonał ruch, teraz moja tura
             updateTurnLabel();
             return;
