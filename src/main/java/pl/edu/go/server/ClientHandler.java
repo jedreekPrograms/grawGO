@@ -51,7 +51,7 @@ public class ClientHandler implements Runnable, ClientConnection {
             String msg;
             while ((msg = in.readLine()) != null) {
                 if (session != null) {
-                    // Przekazanie wiadomości do sesji
+
                     session.onMessage(this, msg);
                 } else {
                     System.out.println("Wiadomość przed przypisaniem do sesji: " + msg);

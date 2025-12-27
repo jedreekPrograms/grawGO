@@ -37,15 +37,17 @@ public class GameSession {
      */
     public void start() {
         sendBoardToBoth();
-        ClientConnection black = getClientByColor(Color.BLACK);
-        if (black != null) black.send("YOUR_TURN");
+        ClientConnection first = getClientByColor(game.getNextToMove());
+        if (first != null) first.send("YOUR_TURN");
     }
+
     /**
      * Główna metoda obsługi komunikatów od graczy.
      * @param sender klient wysyłający wiadomość
      * @param message treść wiadomości
      */
     public synchronized void onMessage(ClientConnection sender, String message) {
+
         if (sessionEnded) {
             sender.send("ERROR Session ended");
             return;
@@ -63,99 +65,23 @@ public class GameSession {
             return;
         }
 
+        // sprawdzenie tury
         boolean requiresTurn = cmd.equals("MOVE") || cmd.equals("PASS");
-        if (requiresTurn && !Objects.equals(game.getNextToMove(), senderColor)) {
+        if (requiresTurn && game.getNextToMove() != senderColor) {
             sender.send("ERROR Not your turn");
             return;
         }
 
-        switch (cmd) {
-            case "MOVE":
-                handleMove(sender, parts, senderColor);
-                break;
+        String[] args = new String[parts.length - 1];
+        System.arraycopy(parts, 1, args, 0, args.length);
 
-            case "PASS":
-                handlePass(sender, senderColor);
-                break;
-
-            case "RESIGN":
-                handleResign(sender, senderColor);
-                break;
-
-            default:
-                sender.send("ERROR Unknown command: " + cmd);
-        }
-    }
-
-    private void handleMove(ClientConnection sender, String[] parts, Color color) {
-        if (parts.length < 3) {
-            sender.send("ERROR MOVE requires x y");
+        if (!handleCommand(cmd, args, sender)) {
             return;
         }
 
-        int x, y;
-        try {
-            x = Integer.parseInt(parts[1]);
-            y = Integer.parseInt(parts[2]);
-        } catch (NumberFormatException e) {
-            sender.send("ERROR Invalid coordinates");
-            return;
-        }
-
-        Point pos = new Point(x, y);
-
-        Move m = moveFactory.createPlace(pos, color);
-
-        synchronized (game) {
-            boolean ok = game.applyMove(m);
-            if (!ok) {
-                sender.send("INVALID");
-                return;
-            }
-
-            sender.send("VALID");
-            ClientConnection opp = getOpponent(sender);
-            if (opp != null) {
-                opp.send("OPPONENT_MOVED " + x + " " + y);
-            }
-            sendBoardToBoth();
-
-            ClientConnection nextPlayer = getClientByColor(game.getNextToMove());
-            if (nextPlayer != null) nextPlayer.send("YOUR_TURN");
-        }
-    }
-
-    private void handlePass(ClientConnection sender, Color color) {
-
-        Move m = moveFactory.createPass(color);
-
-        synchronized (game) {
-            boolean ok = game.applyMove(m);
-            if (!ok) {
-                sender.send("INVALID");
-                return;
-            }
-            sender.send("VALID");
-
-            ClientConnection opp = getOpponent(sender);
-            if (opp != null) {
-                opp.send("OPPONENT_PASSED " + color.name());
-            }
-
-            sendBoardToBoth();
-
-            ClientConnection nextPlayer = getClientByColor(game.getNextToMove());
-            if (nextPlayer != null) nextPlayer.send("YOUR_TURN");
-        }
-    }
-
-    private void handleResign(ClientConnection sender, Color color) {
-        ClientConnection opp = getOpponent(sender);
-
-        sender.send("RESIGN " + color.name());
-        if (opp != null) opp.send("WINNER " + oppestsColor(opp).name());
-
-        endSession();
+        // po poprawnej komendzie — następna tura
+        ClientConnection next = getClientByColor(game.getNextToMove());
+        if (next != null) next.send("YOUR_TURN");
     }
 
     private Color oppestsColor(ClientConnection c) {
@@ -163,28 +89,17 @@ public class GameSession {
         return col == Color.BLACK ? Color.WHITE : Color.BLACK;
     }
 
-    private void sendBoardToBoth() {
-        String serialized = serializeBoard(game.getBoard());
-        sendToBoth("BOARD\n" + serialized);
+    public void sendBoardToBoth() {
+        sendToBoth(
+                "BOARD " +
+                        game.getBoard().getSize() + " " +
+                        game.getBoard().toSingleLineString()
+        );
     }
 
-    private String serializeBoard(Board b) {
-        StringBuilder sb = new StringBuilder();
-        int size = b.getSize();
-        sb.append(size).append("\n");
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
-                Color c = b.get(x, y);
-                char ch;
-                if (c == null || c == Color.EMPTY) ch = '.';
-                else if (c == Color.BLACK) ch = 'B';
-                else ch = 'W';
-                sb.append(ch);
-            }
-            sb.append("\n");
-        }
-        return sb.toString();
-    }
+
+
+
 
     public GameState getGame() { return game; }
 

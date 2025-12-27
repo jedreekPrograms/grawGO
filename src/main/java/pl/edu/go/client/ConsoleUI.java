@@ -90,35 +90,35 @@ public class ConsoleUI {
      * @param board plansza, do której odnoszą się współrzędne ruchu
      * @return polecenie ruchu w formacie tekstowym: "MOVE x y", "PASS" lub "RESIGN"
      */
-    public String getMoveCommand(Color color, Board board) {
-        while(true) {
-            System.out.println(color + " move (format: x y, pass, resign): ");
-            String line = scanner.nextLine().trim();
-            if(line.isEmpty()) continue;
-
-            String lower = line.toLowerCase();
-            if (lower.equals("pass")) {
-                return "PASS";
-            } else if (lower.equals("resign") || lower.equals("resign()")) {
-                return "RESIGN";
-            } else {
-                String[] parts = line.split("\\s+");
-                if (parts.length == 2) {
-                    try {
-                        int x = Integer.parseInt(parts[0]);
-                        int y = Integer.parseInt(parts[1]);
-                        if (board != null && (x < 0 || x >= board.getSize() || y < 0 || y >= board.getSize())) {
-                            System.out.println("Współrzędne poza planszą (0.." + (board.getSize() - 1) + ").");
-                        } else {
-                            return "MOVE " + x + " " + y;
-                        }
-                    } catch (NumberFormatException e) {
-                        System.out.println("Niepoprawne liczby. Spróbuj ponownie.");
-                    }
-                } else {
-                    System.out.println("Niepoprawny format. Użyj 'x y' lub 'pass' lub 'resign'.");
-                }
-            }
-        }
-    }
+//    public String getMoveCommand(Color color, Board board) {
+//        while(true) {
+//            System.out.println(color + " move (format: x y, pass, resign): ");
+//            String line = scanner.nextLine().trim();
+//            if(line.isEmpty()) continue;
+//
+//            String lower = line.toLowerCase();
+//            if (lower.equals("pass")) {
+//                return "PASS";
+//            } else if (lower.equals("resign") || lower.equals("resign()")) {
+//                return "RESIGN";
+//            } else {
+//                String[] parts = line.split("\\s+");
+//                if (parts.length == 2) {
+//                    try {
+//                        int x = Integer.parseInt(parts[0]);
+//                        int y = Integer.parseInt(parts[1]);
+//                        if (board != null && (x < 0 || x >= board.getSize() || y < 0 || y >= board.getSize())) {
+//                            System.out.println("Współrzędne poza planszą (0.." + (board.getSize() - 1) + ").");
+//                        } else {
+//                            return "MOVE " + x + " " + y;
+//                        }
+//                    } catch (NumberFormatException e) {
+//                        System.out.println("Niepoprawne liczby. Spróbuj ponownie.");
+//                    }
+//                } else {
+//                    System.out.println("Niepoprawny format. Użyj 'x y' lub 'pass' lub 'resign'.");
+//                }
+//            }
+//        }
+//    }
 }

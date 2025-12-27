@@ -201,4 +201,18 @@ public class Board {
 
         return list;
     }
+
+    public String toSingleLineString() {
+        StringBuilder sb = new StringBuilder();
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                Color c = get(x, y);
+                sb.append(c == Color.BLACK ? 'B' :
+                        c == Color.WHITE ? 'W' : '.');
+            }
+            if (y < size - 1) sb.append('/');
+        }
+        return sb.toString();
+    }
+
 }
