@@ -39,7 +39,8 @@ public class MoveCommand implements GameCommand {
             return false;
         }
 
-        session.sendToBoth("MOVE " + color + " " + x + " " + y);
+        int captured = session.getGame().getBoard().getTotalCaptured();
+        session.sendToBoth("MOVE " + color + " " + x + " " + y + " " + captured);
         session.sendBoardToBoth();
         return true;
     }

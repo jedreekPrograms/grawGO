@@ -9,6 +9,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import pl.edu.go.model.Color;
 
@@ -32,6 +33,13 @@ public class GoBoardDemo extends Application {
     private Label turnLabel;
     private Label colorLabel;
 
+
+    private int myCaptured = 0;
+    private int opponentCaptured = 0;
+    private Label myCapturedLabel;
+    private Label opponentCapturedLabel;
+
+
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -48,6 +56,15 @@ public class GoBoardDemo extends Application {
 
         colorLabel = new Label("Your Color: ❓");
         colorLabel.setStyle("-fx-font-size: 16px; -fx-padding: 10;");
+
+
+        myCapturedLabel = new Label("Your Captured: 0");
+        myCapturedLabel.setStyle("-fx-font-size: 16px; -fx-padding: 5;");
+        opponentCapturedLabel = new Label("Opponent Captured: 0");
+        opponentCapturedLabel.setStyle("-fx-font-size: 16px; -fx-padding: 5;");
+
+        VBox capturedBox = new VBox(10, myCapturedLabel, opponentCapturedLabel);
+        capturedBox.setStyle("-fx-padding: 10; -fx-border-width: 1; -fx-border-color: gray;");
 
         HBox infoBox = new HBox(20, colorLabel, turnLabel);
 
@@ -70,6 +87,7 @@ public class GoBoardDemo extends Application {
         BorderPane root = new BorderPane();
         root.setTop(infoBox);
         root.setCenter(new StackPane(canvas));
+        root.setRight(capturedBox);
         
         stage.setScene(new Scene(root));
         stage.setTitle("Go");
@@ -114,10 +132,20 @@ public class GoBoardDemo extends Application {
             Color c = Color.valueOf(p[1]);
             int x = Integer.parseInt(p[2]);
             int y = Integer.parseInt(p[3]);
+            int captured = Integer.parseInt(p[4]);
+            
             board[x][y] = c;
             redraw();
 
-            myTurn = (c != myColor); // jeśli przeciwnik wykonał ruch, teraz moja tura
+            if (c != myColor) {
+                myTurn = true; // !!! teraz moja tura
+                opponentCaptured += captured; // !!! przeciwnik zebrał moje kamienie
+                Platform.runLater(() -> opponentCapturedLabel.setText("Opponent Captured: " + opponentCaptured));
+            } else {
+                myTurn = false; // !!! po moim ruchu teraz przeciwnik
+                myCaptured += captured; // !!! dodajemy zbicia przeciwnika
+                Platform.runLater(() -> myCapturedLabel.setText("Your Captured: " + myCaptured));
+            } // jeśli przeciwnik wykonał ruch, teraz moja tura
             updateTurnLabel();
             return;
         }

@@ -41,6 +41,7 @@ public class GameSession {
         if (first != null) first.send("YOUR_TURN");
     }
 
+
     /**
      * Główna metoda obsługi komunikatów od graczy.
      * @param sender klient wysyłający wiadomość

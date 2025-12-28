@@ -14,6 +14,7 @@ public class Board {
 
     /** Dwuwymiarowa tablica przechowująca stan pól. */
     private final Color[][] grid;
+    int totalCaptured;
 
     /**
      * Tworzy planszę o podanym rozmiarze.
@@ -29,6 +30,10 @@ public class Board {
                 grid[x][y] = Color.EMPTY;
             }
         }
+    }
+
+    public int getTotalCaptured() {
+        return totalCaptured;
     }
 
     /** @return rozmiar planszy */
@@ -73,7 +78,7 @@ public class Board {
         if (!isEmpty(x, y)) return -1;
 
         grid[x][y] = color;
-        int totalCaptured = 0;
+        totalCaptured = 0;
         Color enemy = color.opponent();
 
         for (Point p : getAdjacentPoints(x, y)) {
@@ -97,6 +102,7 @@ public class Board {
 
         return totalCaptured;
     }
+
 
     /**
      * Usuwa grupę kamieni z planszy.
