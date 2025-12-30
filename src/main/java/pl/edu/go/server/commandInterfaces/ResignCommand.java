@@ -23,11 +23,11 @@ public class ResignCommand implements GameCommand {
         Move move = moveFactory.createResign(loser);
         session.getGame().applyMove(move);
 
-        // Powiadomienie obu graczy o wyniku
-        session.sendToBoth("RESIGN " + loser);
-        session.sendToBoth("WINNER " + winner);
+
+        session.sendToBoth("RESIGN " + winner);
+
         // Zakończenie sesji
-        session.endSession();
+        //session.endSession();
         return true;
     }
 }

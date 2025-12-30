@@ -29,4 +29,8 @@ public class GoClient {
     public void sendPass() {
         api.send("PASS");
     }
+
+    public void sendResign() {
+        api.send("RESIGN");
+    }
 }

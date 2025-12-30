@@ -59,6 +59,7 @@ public class MatchmakingServer {
                 registry.register("MOVE", new pl.edu.go.server.commandInterfaces.MoveCommand());
                 registry.register("PASS", new pl.edu.go.server.commandInterfaces.PassCommand());
                 registry.register("RESIGN", new pl.edu.go.server.commandInterfaces.ResignCommand());
+                registry.register("FINAL", new pl.edu.go.server.commandInterfaces.FinalCommand());
                 //tu rozmiar dodalem
                 GameSession session = new GameSession(player1, player2, 9, registry);
 

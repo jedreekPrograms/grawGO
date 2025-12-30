@@ -30,6 +30,9 @@ public class GameSession {
 
     public void setLicznikPass(int licznikPass) {
         this.licznikPass = licznikPass;
+        if (licznikPass == 2) {
+            sessionEnded = true;
+        }
     }
 
     // Fabryka ruchów do tworzenia obiektów Move
