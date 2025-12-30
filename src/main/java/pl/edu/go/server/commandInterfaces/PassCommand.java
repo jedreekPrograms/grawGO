@@ -13,6 +13,7 @@ public class PassCommand implements GameCommand {
 
     private final MoveFactory moveFactory = new MoveFactory();
 
+
     @Override
     public boolean execute(String[] args, GameSession session, ClientConnection sender) {
 
@@ -20,8 +21,16 @@ public class PassCommand implements GameCommand {
         Move move = moveFactory.createPass(color);
 
         session.getGame().applyMove(move);
+        int licznikPass = session.getLicznikPass();
 
-        session.sendToBoth("PASS " + color);
+        if (licznikPass < 2) {
+            session.sendToBoth("PASS " + color);
+            licznikPass++;
+            session.setLicznikPass(licznikPass);
+        } else {
+
+        }
+
         return true;
     }
 }

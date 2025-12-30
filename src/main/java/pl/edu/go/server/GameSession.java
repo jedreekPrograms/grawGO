@@ -22,6 +22,15 @@ public class GameSession {
     private final GameState game;
     private boolean sessionEnded = false;
     private final CommandRegistry registry;
+    int licznikPass = 0;
+
+    public int getLicznikPass() {
+        return licznikPass;
+    }
+
+    public void setLicznikPass(int licznikPass) {
+        this.licznikPass = licznikPass;
+    }
 
     // Fabryka ruchów do tworzenia obiektów Move
     private final MoveFactory moveFactory = new MoveFactory();

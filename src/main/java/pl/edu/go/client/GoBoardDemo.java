@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -38,6 +39,7 @@ public class GoBoardDemo extends Application {
     private int opponentCaptured = 0;
     private Label myCapturedLabel;
     private Label opponentCapturedLabel;
+    private Label passLabel;
 
 
     @Override
@@ -51,11 +53,15 @@ public class GoBoardDemo extends Application {
         canvas = new Canvas(size, size);
         gc = canvas.getGraphicsContext2D();
 
+        Button passButton = new Button("PASS");
         turnLabel = new Label("Waiting for opponent...");
         turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 10;");
 
         colorLabel = new Label("Your Color: ❓");
         colorLabel.setStyle("-fx-font-size: 16px; -fx-padding: 10;");
+
+        passLabel = new Label("Opponent passed");
+        passLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 10; -fx-text-fill: gray;");
 
 
         myCapturedLabel = new Label("Your Captured: 0");
@@ -66,7 +72,11 @@ public class GoBoardDemo extends Application {
         VBox capturedBox = new VBox(10, myCapturedLabel, opponentCapturedLabel);
         capturedBox.setStyle("-fx-padding: 10; -fx-border-width: 1; -fx-border-color: gray;");
 
-        HBox infoBox = new HBox(20, colorLabel, turnLabel);
+        HBox infoBox = new HBox(20, passButton, passLabel, colorLabel, turnLabel);
+
+        passButton.setOnAction(e -> {
+            client.sendPass();
+        });
 
         canvas.setOnMouseClicked(e -> {
             if (!myTurn) return;
@@ -133,7 +143,7 @@ public class GoBoardDemo extends Application {
             int x = Integer.parseInt(p[2]);
             int y = Integer.parseInt(p[3]);
             int captured = Integer.parseInt(p[4]);
-            
+
             board[x][y] = c;
             redraw();
 
@@ -163,14 +173,45 @@ public class GoBoardDemo extends Application {
 
             redraw();
         }
+
+        if (msg.startsWith("PASS")) {
+            String[] p = msg.split(" ");
+            Color c = Color.valueOf(p[1]);
+            if (c != myColor) {
+                myTurn = true;
+                Platform.runLater(() -> opponentCapturedLabel.setText("Opponent Captured: " + opponentCaptured));
+            } else {
+                myTurn = false;
+                Platform.runLater(() -> myCapturedLabel.setText("Your Captured: " + myCaptured));
+            }
+            updatePassLabel();
+        }
     }
+
+    private void updatePassLabel() {
+        Platform.runLater(() -> {
+            if (myTurn) {
+                passLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red; -fx-padding: 10;");
+                turnLabel.setText("Your Turn");
+                turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: green; -fx-padding: 10;");
+            } else {
+                turnLabel.setText("Opponent's Turn");
+                turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red; -fx-padding: 10;");
+            }
+
+        });
+    }
+
+
 
     private void updateTurnLabel() {
         Platform.runLater(() -> {
             if (myTurn) {
+                passLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: grey; -fx-padding: 10;");
                 turnLabel.setText("Your Turn");
                 turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: green; -fx-padding: 10;");
             } else {
+                passLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: grey; -fx-padding: 10;");
                 turnLabel.setText("Opponent's Turn");
                 turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red; -fx-padding: 10;");
             }

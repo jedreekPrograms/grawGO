@@ -25,4 +25,8 @@ public class GoClient {
     public void sendMove(int x, int y) {
         api.send("MOVE " + x + " " + y);
     }
+
+    public void sendPass() {
+        api.send("PASS");
+    }
 }

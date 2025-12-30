@@ -42,6 +42,8 @@ public class MoveCommand implements GameCommand {
         int captured = session.getGame().getBoard().getTotalCaptured();
         session.sendToBoth("MOVE " + color + " " + x + " " + y + " " + captured);
         session.sendBoardToBoth();
+        session.setLicznikPass(0);
+
         return true;
     }
 }
