@@ -2,6 +2,7 @@ package pl.edu.go.client;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -15,12 +16,13 @@ import javafx.stage.Stage;
 import pl.edu.go.model.Color;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class GoBoardDemo extends Application {
 
     private static final int BOARD_SIZE = 9;
-    private static final double CELL = 50;
-    private static final double MARGIN = 40;
+    private static final double CELL = 52;
+    private static final double MARGIN = 36;
 
     private final Color[][] board = new Color[BOARD_SIZE][BOARD_SIZE];
 
@@ -34,14 +36,12 @@ public class GoBoardDemo extends Application {
     private Label turnLabel;
     private Label colorLabel;
 
-
     private int myCaptured = 0;
     private int opponentCaptured = 0;
     private Label myCapturedLabel;
     private Label opponentCapturedLabel;
     private Label passLabel;
     private boolean winner;
-
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -55,33 +55,39 @@ public class GoBoardDemo extends Application {
         gc = canvas.getGraphicsContext2D();
 
         Button passButton = new Button("PASS");
+        passButton.getStyleClass().add("pass-button");
+
         Button resignButton = new Button("RESIGN");
+        resignButton.getStyleClass().add("resign-button");
+
         turnLabel = new Label("Waiting for opponent...");
-        turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 10;");
+        turnLabel.getStyleClass().add("title-label");
 
         colorLabel = new Label("Your Color: ❓");
-        colorLabel.setStyle("-fx-font-size: 16px; -fx-padding: 10;");
+        colorLabel.getStyleClass().add("color-label");
 
-        passLabel = new Label("Opponent passed");
-        passLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-padding: 10; -fx-text-fill: white;");
+        passLabel = new Label("");
+        passLabel.getStyleClass().add("status-label");
+        passLabel.setVisible(false);
 
+        myCapturedLabel = new Label("You: 0");
+        myCapturedLabel.getStyleClass().add("captured-label");
 
-        myCapturedLabel = new Label("Your Captured: 0");
-        myCapturedLabel.setStyle("-fx-font-size: 16px; -fx-padding: 5;");
-        opponentCapturedLabel = new Label("Opponent Captured: 0");
-        opponentCapturedLabel.setStyle("-fx-font-size: 16px; -fx-padding: 5;");
+        opponentCapturedLabel = new Label("Opponent: 0");
+        opponentCapturedLabel.getStyleClass().add("captured-label");
 
-        VBox capturedBox = new VBox(10, myCapturedLabel, opponentCapturedLabel);
-        capturedBox.setStyle("-fx-padding: 10; -fx-border-width: 1; -fx-border-color: gray;");
+        VBox capturedBox = new VBox(12, myCapturedLabel, opponentCapturedLabel);
+        capturedBox.getStyleClass().addAll("card", "side-panel");
 
-        HBox infoBox = new HBox(20, passButton,resignButton, passLabel, colorLabel, turnLabel);
+        VBox statusBox = new VBox(6, turnLabel, colorLabel);
+        HBox actionsBox = new HBox(10, passButton, resignButton);
 
-        passButton.setOnAction(e -> {
-            client.sendPass();
-        });
-        resignButton.setOnAction(e->{
-            client.sendResign();
-        });
+        HBox infoBox = new HBox(20, statusBox, actionsBox, passLabel);
+        infoBox.getStyleClass().add("top-bar");
+        infoBox.setAlignment(Pos.CENTER_LEFT);
+
+        passButton.setOnAction(e -> client.sendPass());
+        resignButton.setOnAction(e -> client.sendResign());
 
         canvas.setOnMouseClicked(e -> {
             if (!myTurn) return;
@@ -97,14 +103,23 @@ public class GoBoardDemo extends Application {
             updateTurnLabel();
         });
 
+        StackPane centerPane = new StackPane(canvas);
+        centerPane.getStyleClass().add("card");
+
         drawBoard();
 
         BorderPane root = new BorderPane();
         root.setTop(infoBox);
-        root.setCenter(new StackPane(canvas));
+        root.setCenter(centerPane);
         root.setRight(capturedBox);
-        
-        stage.setScene(new Scene(root));
+
+        Scene scene = new Scene(root);
+        scene.getStylesheets().add(
+                Objects.requireNonNull(getClass()
+                        .getResource("/styles/style.css")).toExternalForm()
+        );
+
+        stage.setScene(scene);
         stage.setTitle("Go");
         stage.show();
 
@@ -112,35 +127,27 @@ public class GoBoardDemo extends Application {
         new Thread(client::run).start();
     }
 
+    /* ===================== SERVER ===================== */
+
     public void handleServerMessage(String msg) {
 
         if (msg.startsWith("START")) {
             myColor = Color.valueOf(msg.split(" ")[1]);
-            System.out.println("Mój kolor: " + myColor);
-
-
 
             Platform.runLater(() -> {
                 if (myColor == Color.BLACK) {
-                    colorLabel.setText("Your Color: Czarny"); // czarny ornament
-                    colorLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: black; -fx-padding: 10;"); // czarny
+                    colorLabel.setText("Your Color: Czarny");
+                    colorLabel.getStyleClass().add("color-black");
                 } else {
-                    colorLabel.setText("Your Color: Biały"); // biały ornament
-                    colorLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: silver; -fx-padding: 10;"); // srebrny
+                    colorLabel.setText("Your Color: Biały");
+                    colorLabel.getStyleClass().add("color-white");
                 }
             });
 
-
-            myTurn = (myColor == Color.BLACK);
+            myTurn = myColor == Color.BLACK;
             updateTurnLabel();
             return;
         }
-
-//        if (msg.equals("YOUR_TURN")) {
-//            myTurn = true;
-//            updateTurnLabel();
-//            return;
-//        }
 
         if (msg.startsWith("MOVE")) {
             String[] p = msg.split(" ");
@@ -153,128 +160,118 @@ public class GoBoardDemo extends Application {
             redraw();
 
             if (c != myColor) {
-                myTurn = true; // !!! teraz moja tura
-                opponentCaptured += captured; // !!! przeciwnik zebrał moje kamienie
-                Platform.runLater(() -> opponentCapturedLabel.setText("Opponent Captured: " + opponentCaptured));
+                myTurn = true;
+                opponentCaptured += captured;
+                Platform.runLater(() ->
+                        opponentCapturedLabel.setText("Opponent: " + opponentCaptured)
+                );
             } else {
-                myTurn = false; // !!! po moim ruchu teraz przeciwnik
-                myCaptured += captured; // !!! dodajemy zbicia przeciwnika
-                Platform.runLater(() -> myCapturedLabel.setText("Your Captured: " + myCaptured));
-            } // jeśli przeciwnik wykonał ruch, teraz moja tura
+                myTurn = false;
+                myCaptured += captured;
+                Platform.runLater(() ->
+                        myCapturedLabel.setText("You: " + myCaptured)
+                );
+            }
             updateTurnLabel();
-            return;
-        }
-
-        if (msg.startsWith("BOARD")) {
-            String[] parts = msg.split(" ", 3);
-            String[] rows = parts[2].split("/");
-
-            for (int y = 0; y < BOARD_SIZE; y++)
-                for (int x = 0; x < BOARD_SIZE; x++)
-                    board[x][y] =
-                            rows[y].charAt(x) == 'B' ? Color.BLACK :
-                                    rows[y].charAt(x) == 'W' ? Color.WHITE :
-                                            Color.EMPTY;
-
-            redraw();
         }
 
         if (msg.startsWith("PASS")) {
-            String[] p = msg.split(" ");
-            Color c = Color.valueOf(p[1]);
-            if (c != myColor) {
-                myTurn = true;
-            } else {
-                myTurn = false;
-            }
-            updatePassLabel();
+            myTurn = !myTurn;
+            updateTurnLabel();
         }
+
         if (msg.startsWith("RESIGN")) {
-            String[] p = msg.split(" ");
-            Color c = Color.valueOf(p[1]);
-            if(c == myColor) {
-                winner = true;
-            } else {
-                winner = false;
-            }
+            Color c = Color.valueOf(msg.split(" ")[1]);
+            winner = c != myColor;
             updateWinLabel();
         }
     }
 
-    private void updateWinLabel() {
-        Platform.runLater(() -> {
-            if (winner) {
-                passLabel.setText("YOU ARE WINNER!!!!!!!");
-                passLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: green; -fx-padding: 10;");
-                turnLabel.setText("The end of game");
-                turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: black; -fx-padding: 10;");
-            } else {
-                passLabel.setText("YOU ARE LOSER!!!!!!!");
-                passLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red; -fx-padding: 10;");
-                turnLabel.setText("The end of game");
-                turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: black; -fx-padding: 10;");
-            }
-
-        });
-    }
-
-    private void updatePassLabel() {
-        Platform.runLater(() -> {
-            if (myTurn) {
-                passLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red; -fx-padding: 10;");
-                turnLabel.setText("Your Turn");
-                turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: green; -fx-padding: 10;");
-            } else {
-                turnLabel.setText("Opponent's Turn");
-                turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red; -fx-padding: 10;");
-            }
-
-        });
-    }
-
-
+    /* ===================== UI ===================== */
 
     private void updateTurnLabel() {
         Platform.runLater(() -> {
+            turnLabel.getStyleClass().removeAll("turn-your", "turn-opponent");
             if (myTurn) {
-                passLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 10;");
                 turnLabel.setText("Your Turn");
-                turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: green; -fx-padding: 10;");
+                turnLabel.getStyleClass().add("turn-your");
             } else {
-                passLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white; -fx-padding: 10;");
                 turnLabel.setText("Opponent's Turn");
-                turnLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: red; -fx-padding: 10;");
+                turnLabel.getStyleClass().add("turn-opponent");
             }
         });
     }
 
+    private void updateWinLabel() {
+        Platform.runLater(() -> {
+            turnLabel.setText("Game Over");
+            passLabel.setVisible(true);
+            passLabel.getStyleClass().removeAll("win", "lose");
+            if (winner) {
+                passLabel.setText("YOU WIN 🎉");
+                passLabel.getStyleClass().add("win");
+            } else {
+                passLabel.setText("YOU LOSE 💀");
+                passLabel.getStyleClass().add("lose");
+            }
+        });
+    }
+
+    /* ===================== DRAWING ===================== */
+
     private void drawBoard() {
-        gc.setFill(javafx.scene.paint.Color.BURLYWOOD);
+        // ciepłe, jasne drewno – pasuje do białego UI
+        gc.setFill(javafx.scene.paint.Color.web("#E3C58F"));
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
-        gc.setStroke(javafx.scene.paint.Color.BLACK);
+        gc.setStroke(javafx.scene.paint.Color.web("#2F2F2F"));
+        gc.setLineWidth(1);
 
         for (int i = 0; i < BOARD_SIZE; i++) {
             double p = MARGIN + i * CELL;
             gc.strokeLine(p, MARGIN, p, MARGIN + CELL * (BOARD_SIZE - 1));
             gc.strokeLine(MARGIN, p, MARGIN + CELL * (BOARD_SIZE - 1), p);
         }
+
+        drawStarPoints();
+    }
+
+    private void drawStarPoints() {
+        int[] hoshi = {2, 4, 6}; // rogi + środek
+
+        gc.setFill(javafx.scene.paint.Color.web("#2F2F2F"));
+
+        for (int x : hoshi) {
+            for (int y : hoshi) {
+                if ((x == 4 && y == 4) || (x != 4 && y != 4)) {
+                    double cx = MARGIN + x * CELL;
+                    double cy = MARGIN + y * CELL;
+                    gc.fillOval(cx - 3, cy - 3, 6, 6);
+                }
+            }
+        }
     }
 
     private void redraw() {
         drawBoard();
+
         for (int x = 0; x < BOARD_SIZE; x++) {
             for (int y = 0; y < BOARD_SIZE; y++) {
                 if (board[x][y] != Color.EMPTY) {
-                    gc.setFill(board[x][y] == Color.BLACK ?
-                            javafx.scene.paint.Color.BLACK :
-                            javafx.scene.paint.Color.WHITE);
 
-                    gc.fillOval(
-                            MARGIN + x * CELL - 16,
-                            MARGIN + y * CELL - 16,
-                            32, 32
-                    );
+                    double cx = MARGIN + x * CELL;
+                    double cy = MARGIN + y * CELL;
+
+                    // cień
+                    gc.setFill(javafx.scene.paint.Color.rgb(0, 0, 0, 0.25));
+                    gc.fillOval(cx - 16 + 2, cy - 16 + 2, 32, 32);
+
+                    // kamień
+                    gc.setFill(board[x][y] == Color.BLACK
+                            ? javafx.scene.paint.Color.web("#1F2937")
+                            : javafx.scene.paint.Color.web("#F9FAFB"));
+
+                    gc.fillOval(cx - 16, cy - 16, 32, 32);
                 }
             }
         }
@@ -283,5 +280,4 @@ public class GoBoardDemo extends Application {
     public static void main(String[] args) {
         launch(args);
     }
-
 }
