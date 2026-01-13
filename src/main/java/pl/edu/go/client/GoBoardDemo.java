@@ -149,6 +149,15 @@ public class GoBoardDemo extends Application {
             return;
         }
 
+        if (msg.startsWith("BOARD")) {
+            String[] parts = msg.split(" ", 3);
+            String boardStr = parts[2];
+            loadBoard(boardStr);
+            redraw();
+        }
+        
+        
+
         if (msg.startsWith("MOVE")) {
             String[] p = msg.split(" ");
             Color c = Color.valueOf(p[1]);
@@ -186,6 +195,21 @@ public class GoBoardDemo extends Application {
             updateWinLabel();
         }
     }
+
+    private void loadBoard(String s) {
+        String[] rows = s.split("/");
+
+        for (int y = 0; y < BOARD_SIZE; y++) {
+            for (int x = 0; x < BOARD_SIZE; x++) {
+                char c = rows[y].charAt(x);
+                board[x][y] =
+                        c == 'B' ? Color.BLACK :
+                                c == 'W' ? Color.WHITE :
+                                        Color.EMPTY;
+            }
+        }
+    }
+
 
     /* ===================== UI ===================== */
 
