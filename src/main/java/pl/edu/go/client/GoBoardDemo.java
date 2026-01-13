@@ -43,6 +43,10 @@ public class GoBoardDemo extends Application {
     private Label passLabel;
     private boolean winner;
 
+    private double myFinalScore = 0;
+    private double opponentFinalScore = 0;
+
+
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -155,8 +159,47 @@ public class GoBoardDemo extends Application {
             loadBoard(boardStr);
             redraw();
         }
-        
-        
+
+        if (msg.startsWith("SCORE")) {
+            String[] p = msg.split(" ");
+            double black = Double.parseDouble(p[1]);
+            double white = Double.parseDouble(p[2]);
+            String winnerColor = p[3];
+
+            // przypisujemy do naszych zmiennych
+            if (myColor == Color.BLACK) {
+                myFinalScore = black;
+                opponentFinalScore = white;
+            } else {
+                myFinalScore = white;
+                opponentFinalScore = black;
+            }
+
+            boolean iWin =
+                    (winnerColor.equals("BLACK") && myColor == Color.BLACK) ||
+                            (winnerColor.equals("WHITE") && myColor == Color.WHITE);
+
+            Platform.runLater(() -> {
+                turnLabel.setText("Game Over");
+                passLabel.setVisible(true);
+                passLabel.getStyleClass().removeAll("win", "lose");
+
+                passLabel.setText(
+                        "BLACK: " + black + " | WHITE: " + white +
+                                "\n" + (iWin ? "YOU WIN 🎉" : "YOU LOSE 💀")
+                );
+
+                passLabel.getStyleClass().add(iWin ? "win" : "lose");
+
+                // 🔹 dodatkowo aktualizujemy boczny panel
+                myCapturedLabel.setText("You: " + myFinalScore);
+                opponentCapturedLabel.setText("Opponent: " + opponentFinalScore);
+            });
+        }
+
+
+
+
 
         if (msg.startsWith("MOVE")) {
             String[] p = msg.split(" ");
