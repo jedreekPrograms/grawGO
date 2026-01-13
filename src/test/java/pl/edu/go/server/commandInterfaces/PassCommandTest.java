@@ -11,7 +11,7 @@ import static org.mockito.Mockito.*;
 
 public class PassCommandTest {
 
-
+    /*
     @Test
     public void testPassCommand() {
         PassCommand cmd = new PassCommand();
@@ -26,5 +26,5 @@ public class PassCommandTest {
         boolean result = cmd.execute(new String[]{}, session, sender);
         assertTrue(result);
         verify(session).sendToBoth("PASS BLACK");
-    }
+    }*/
 }

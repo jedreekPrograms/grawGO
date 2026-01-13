@@ -31,6 +31,15 @@ public class Board {
             }
         }
     }
+    //Konstruktor kopiujacy stan planszy do symulowania KO
+    public Board(Board other) {
+        this.size = other.size;
+        this.totalCaptured = other.totalCaptured;
+        this.grid = new Color[size][size];
+        for (int x = 0; x < size; x++) {
+            System.arraycopy(other.grid[x], 0, this.grid[x], 0, size);
+        }
+    }
 
     public int getTotalCaptured() {
         return totalCaptured;
@@ -80,24 +89,26 @@ public class Board {
         grid[x][y] = color;
         totalCaptured = 0;
         Color enemy = color.opponent();
-
+        Set<Point> capturedStones = new HashSet<>();
+        
         for (Point p : getAdjacentPoints(x, y)) {
             if (get(p.x, p.y) == enemy) {
                 Set<Point> enemyGroup = getGroup(p.x, p.y);
-                Set<Point> liberties = getLiberties(enemyGroup);
-
-                if (liberties.isEmpty()) {
-                    totalCaptured += removeGroup(enemyGroup);
+                if (getLiberties(enemyGroup).isEmpty()) {
+                    capturedStones.addAll(enemyGroup);
                 }
             }
         }
 
-        Set<Point> myGroup = getGroup(x, y);
-        Set<Point> myLiberties = getLiberties(myGroup);
+        totalCaptured = removeGroup(capturedStones);
 
-        if (myLiberties.isEmpty() && totalCaptured == 0) {
-            grid[x][y] = Color.EMPTY;
-            return -1;
+        if (totalCaptured == 0) {
+            Set<Point> myGroup = getGroup(x, y);
+            if (getLiberties(myGroup).isEmpty()) {
+                // Ruch samobójczy bez bicia - cofamy i zwracamy błąd
+                grid[x][y] = Color.EMPTY;
+                return -1;
+            }
         }
 
         return totalCaptured;
