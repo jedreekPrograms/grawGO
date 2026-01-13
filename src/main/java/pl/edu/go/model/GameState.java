@@ -2,6 +2,8 @@ package pl.edu.go.model;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Klasa przechowująca aktualny stan gry.
@@ -10,8 +12,14 @@ import java.util.Deque;
  */
 public class GameState {
 
+    public enum Status {
+        PLAYING,    // Gra trwa
+        STOPPED,    // Gra zatrzymana (dwa pasy), czas na oznaczanie martwych kamieni
+        FINISHED    // Gra zakończona (rezygnacja lub podliczenie punktów)
+    }
+
     /** Aktualna plansza gry. */
-    private final Board board;
+    private Board board;
 
     /** Kolor gracza, który wykonuje następny ruch. */
     private Color nextToMove;
@@ -22,11 +30,14 @@ public class GameState {
     /** Liczba kamieni zbitych przez białego gracza. */
     private int whiteCaptures;
 
+    private Status status;
+    private final Set<Integer> previousBoardStates;
+    private Move.Type lastMoveType;
     /** Historia hashy planszy używana do wykrywania powtórzeń pozycji. */
-    private final Deque<Integer> historyHashes;
+    //private final Deque<Integer> historyHashes;
 
     /** Informacja, czy gra została zakończona. */
-    private boolean gameOver;
+    //private boolean gameOver;
 
     /**
      * Tworzy nowy stan gry dla planszy o podanym rozmiarze.
@@ -39,9 +50,13 @@ public class GameState {
         this.nextToMove = Color.BLACK;
         this.blackCaptures = 0;
         this.whiteCaptures = 0;
-        this.historyHashes = new ArrayDeque<>();
-        this.historyHashes.add(board.computeHash());
-        this.gameOver = false;
+        this.status = Status.PLAYING;
+        //this.historyHashes = new ArrayDeque<>();
+        //this.historyHashes.add(board.computeHash());
+        this.previousBoardStates = new HashSet<>();
+        this.previousBoardStates.add(board.computeHash());
+        //this.gameOver = false;
+        this.lastMoveType = null;
     }
 
     /** @return aktualna plansza */
@@ -65,8 +80,8 @@ public class GameState {
     }
 
     /** @return true jeśli gra jest zakończona */
-    public boolean isGameOver() {
-        return gameOver;
+    public Status getStatus() { 
+        return status; 
     }
 
     /**
@@ -77,9 +92,54 @@ public class GameState {
      *         false jeśli ruch jest nielegalny lub gra jest zakończona
      */
     public boolean applyMove(Move move) {
-        if (gameOver) return false;
+        //if (gameOver) return false;
+        if (status != Status.PLAYING) return false;
+        if (move.getColor() != nextToMove) return false;
 
-        switch (move.getType()) {
+        if (move.getType() == Move.Type.RESIGN) {
+            status = Status.FINISHED;
+            return true;
+        }
+
+        if (move.getType() == Move.Type.PASS) {
+            // Zasada 8: Dwa pasy z rzędu zatrzymują grę
+            if (lastMoveType == Move.Type.PASS) {
+                status = Status.STOPPED;
+            }
+            switchTurn(Move.Type.PASS);
+            return true;
+        }
+
+        if (move.getType() == Move.Type.PLACE) {
+            // Symulacja ruchu na kopii planszy, aby sprawdzić legalność (Ko i Samobójstwo)
+            Board simulation = new Board(this.board);
+            int captured = simulation.placeStone(move.getColor(), move.getPos().x, move.getPos().y);
+
+            // Ruch nielegalny mechanicznie (zajęte pole, samobójstwo)
+            if (captured < 0) {
+                return false;
+            }
+
+            // Zasada 6 (Ko / Superko): Sprawdź czy stan planszy się nie powtarza
+            int newHash = simulation.computeHash();
+            if (previousBoardStates.contains(newHash)) {
+                return false; // Naruszenie zasady Ko
+            }
+
+            // Jeśli wszystko OK, aplikujemy ruch na prawdziwej planszy
+            board = simulation; // Podmieniamy planszę na tę z symulacji
+            if (move.getColor() == Color.BLACK) {
+                blackCaptures += captured;
+            } else {
+                whiteCaptures += captured;
+            }
+
+            previousBoardStates.add(newHash);
+            switchTurn(Move.Type.PLACE);
+            return true;
+        }
+        return false;
+        /*switch (move.getType()) {
             case PLACE:
                 if (move.getColor() != nextToMove) {
                     return false;
@@ -114,6 +174,27 @@ public class GameState {
 
             default:
                 return false;
+        }*/
+
+
+
+
+    }
+    private void switchTurn(Move.Type type) {
+        this.lastMoveType = type;
+        this.nextToMove = nextToMove.opponent();
+    }
+    public void resumeGame() {
+        if (status == Status.STOPPED) {
+            status = Status.PLAYING;
+            lastMoveType = null; // Reset licznika pasów
+            // nextToMove pozostaje bez zmian (czyli ten, kto miałby ruch po dwóch pasach)
+            // lub można wymusić logikę z zasady 8 ("przeciwnik nie może odmówić i gra jako pierwszy").
+            // W obecnym modelu nextToMove wskazuje na osobę, która miałaby ruch po pasie,
+            // co spełnia ten warunek naturalnie.
         }
+    }
+    public boolean isGameOver() {
+    return status == Status.FINISHED;
     }
 }
