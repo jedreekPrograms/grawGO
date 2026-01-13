@@ -41,7 +41,7 @@ public class ConsoleUI {
      * </ul>
      * </p>
      *
-     * @param board plansza do wyświetlenia; jeśli null, wyświetlany jest komunikat "(break planszy)"
+     * @param board plansza do wyświetlenia; jeśli null, wyświetlany jest komunikat "(break planszy)"d
      */
     public void displayBoard(Board board) {
         if (board == null) {
