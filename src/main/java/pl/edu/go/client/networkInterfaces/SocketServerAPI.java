@@ -9,7 +9,7 @@ import java.net.*;
  * <p>
  * SocketServerAPI odpowiada za:
  * <ul>
- *     <li>połączenie z serwerem pod wskazanym hostem i portem</li>
+ *     <li>połączenie z serwerem pod wskazanym hostem i portem</li>s
  *     <li>wysyłanie wiadomości do serwera</li>
  *     <li>odbieranie wiadomości od serwera w osobnym wątku i przekazywanie ich do {@link MessageListener}</li>
  * </ul>
