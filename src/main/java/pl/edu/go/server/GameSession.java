@@ -7,6 +7,7 @@ import pl.edu.go.model.GameState;
 import pl.edu.go.model.Move;
 import pl.edu.go.model.MoveFactory;
 import pl.edu.go.model.Point;
+import pl.edu.go.model.GameState.Status;
 import pl.edu.go.model.Color;
 import pl.edu.go.model.Board;
 
@@ -22,7 +23,7 @@ public class GameSession {
     private final GameState game;
     private boolean sessionEnded = false;
     private final CommandRegistry registry;
-    int licznikPass = 0;
+    /*int licznikPass = 0;
 
     public int getLicznikPass() {
         return licznikPass;
@@ -31,9 +32,11 @@ public class GameSession {
     public void setLicznikPass(int licznikPass) {
         this.licznikPass = licznikPass;
         if (licznikPass == 2) {
-            sessionEnded = true;
+            System.out.println("SCoring Session");
+            this.game.setStatus(Status.STOPPED);
+            sendToBoth("STOPPED");
         }
-    }
+    }*/
 
     // Fabryka ruchów do tworzenia obiektów Move
     private final MoveFactory moveFactory = new MoveFactory();
@@ -60,7 +63,7 @@ public class GameSession {
      * @param message treść wiadomości
      */
     public synchronized void onMessage(ClientConnection sender, String message) {
-
+        
         if (sessionEnded) {
             sender.send("ERROR Session ended");
             return;
@@ -79,11 +82,16 @@ public class GameSession {
         }
 
         // sprawdzenie tury
+        // w fazie STOPPED wszystkie komendy DEAD / ACCEPT / CONTINUE są dozwolone bez tury
         boolean requiresTurn = cmd.equals("MOVE") || cmd.equals("PASS");
-        if (requiresTurn && game.getNextToMove() != senderColor) {
+        boolean allowDuringStop = game.getStatus() == GameState.Status.STOPPED &&
+                (cmd.equals("DEAD") || cmd.equals("ACCEPT") || cmd.equals("CONTINUE"));
+
+        if (requiresTurn && game.getNextToMove() != senderColor && !allowDuringStop) {
             sender.send("ERROR Not your turn");
             return;
         }
+
 
         String[] args = new String[parts.length - 1];
         System.arraycopy(parts, 1, args, 0, args.length);
@@ -93,8 +101,12 @@ public class GameSession {
         }
 
         // po poprawnej komendzie — następna tura
-        ClientConnection next = getClientByColor(game.getNextToMove());
-        if (next != null) next.send("YOUR_TURN");
+        if (game.getStatus() == Status.PLAYING) {
+    ClientConnection next = getClientByColor(game.getNextToMove());
+    if (next != null) next.send("YOUR_TURN");
+}
+
+        System.out.println(game.getStatus());
     }
 
     private Color oppestsColor(ClientConnection c) {
@@ -103,12 +115,23 @@ public class GameSession {
     }
 
     public void sendBoardToBoth() {
-        sendToBoth(
-                "BOARD " +
-                        game.getBoard().getSize() + " " +
-                        game.getBoard().toSingleLineString()
-        );
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("BOARD ")
+      .append(game.getBoard().getSize())
+      .append(" ")
+      .append(game.getBoard().toSingleLineString());
+
+    if (!game.getMarkedDead().isEmpty()) {
+        sb.append(" DEAD");
+        for (Point p : game.getMarkedDead()) {
+            sb.append(" ").append(p.x).append(",").append(p.y);
+        }
     }
+
+    sendToBoth(sb.toString());
+}
+
 
 
 

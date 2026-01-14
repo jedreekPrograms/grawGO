@@ -2,109 +2,106 @@ package pl.edu.go.model;
 
 import java.util.*;
 
-/**
- * Klasa obliczająca punkty po zakończeniu gry.
- */
 public class TerritoryCalculator {
 
-    /**
-     * Wynik gry.
-     */
     public record GameResult(double blackScore, double whiteScore, double komi, String winner) {}
 
-    /**
-     * Oblicza wynik gry.
-     *
-     * @param gameState Stan gry.
-     * @param deadStones Zbiór punktów wskazanych jako martwe kamienie.
-     * @param komi Punkty rekompensaty dla białego.
-     * @return Wynik gry.
-     */
-    public GameResult calculateScore(GameState gameState, Set<Point> deadStones, double komi) {
-        Board originalBoard = gameState.getBoard();
-        int size = originalBoard.getSize();
+    public GameResult calculateScore(GameState gameState,
+                                     Set<Point> deadStones,
+                                     double komi) {
 
-        // 1. Stwórz kopię planszy do obliczeń
-        Board scoringBoard = new Board(originalBoard);
+        Board board = new Board(gameState.getBoard());
+        int size = board.getSize();
 
-        // 2. Usuń martwe kamienie (i policz je jako jeńców)
+        // ==================================================
+        // 1. Usuń martwe kamienie i policz jeńców
+        // ==================================================
         int extraBlackCaptures = 0;
         int extraWhiteCaptures = 0;
 
         for (Point p : deadStones) {
-            Color stone = scoringBoard.get(p.x, p.y);
-            if (stone == Color.WHITE) {
-                extraBlackCaptures++;
-            } else if (stone == Color.BLACK) {
-                extraWhiteCaptures++;
-            }
-            // Usuwamy kamień manualnie na kopii planszy
-            // (Board.placeStone ma logikę gry, tutaj robimy czystkę)
-        }
-        scoringBoard.removeGroup(deadStones);
+            Color c = board.get(p.x, p.y);
+            if (c == Color.WHITE) extraBlackCaptures++;
+            else if (c == Color.BLACK) extraWhiteCaptures++;
 
-        // 3. Policz terytorium
-        // ZMIANA: Używamy tablic jednoelementowych jako "mutable wrappers",
-        // aby można było je modyfikować wewnątrz lambdy.
-        final int[] blackTerritory = {0};
-        final int[] whiteTerritory = {0};
-        
+            board.removeGroup(Set.of(p));   // bezpieczne – usuwa 1 kamień
+        }
+
+        // ==================================================
+        // 2. Liczenie terytorium
+        // ==================================================
         boolean[][] visited = new boolean[size][size];
+
+        int blackTerritory = 0;
+        int whiteTerritory = 0;
 
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
-                if (scoringBoard.isEmpty(x, y) && !visited[x][y]) {
-                    analyzeTerritory(scoringBoard, x, y, visited,
-                            res -> {
-                                if (res == Color.BLACK) blackTerritory[0]++;
-                                else if (res == Color.WHITE) whiteTerritory[0]++;
-                            });
+                if (board.isEmpty(x, y) && !visited[x][y]) {
+                    TerritoryResult tr = analyzeTerritory(board, x, y, visited);
+
+                    if (tr.owner == Color.BLACK) blackTerritory += tr.size;
+                    else if (tr.owner == Color.WHITE) whiteTerritory += tr.size;
                 }
             }
         }
 
-        // 4. Sumowanie punktów
-        int totalBlackCaptures = gameState.getBlackCaptures() + extraBlackCaptures;
-        int totalWhiteCaptures = gameState.getWhiteCaptures() + extraWhiteCaptures;
+        // ==================================================
+        // 3. Wynik końcowy (japońska punktacja)
+        // ==================================================
+        int totalBlackCaptures =
+                gameState.getBlackCaptures() + extraBlackCaptures;
+        int totalWhiteCaptures =
+                gameState.getWhiteCaptures() + extraWhiteCaptures;
 
-        // Odczytujemy wartości z tablic
-        double finalBlackScore = blackTerritory[0] + totalBlackCaptures;
-        double finalWhiteScore = whiteTerritory[0] + totalWhiteCaptures + komi;
+        double finalBlack = blackTerritory + totalBlackCaptures;
+        double finalWhite = whiteTerritory + totalWhiteCaptures + komi;
 
-        String winner = finalBlackScore > finalWhiteScore ? "BLACK" : "WHITE";
+        String winner = finalBlack > finalWhite ? "BLACK" : "WHITE";
 
-        return new GameResult(finalBlackScore, finalWhiteScore, komi, winner);
+        return new GameResult(finalBlack, finalWhite, komi, winner);
     }
 
+    // ==================================================
+    // POMOCNICZE
+    // ==================================================
+
+    private record TerritoryResult(Color owner, int size) {}
+
     /**
-     * Pomocnicza metoda analizująca obszar pustych pól.
+     * Analizuje obszar pustych pól.
+     * Właściciel = kolor ŻYWYCH kamieni granicznych.
      */
-    private void analyzeTerritory(Board board, int startX, int startY, boolean[][] visited, java.util.function.Consumer<Color> callback) {
-        List<Point> region = new ArrayList<>();
-        Queue<Point> queue = new LinkedList<>();
-        Point start = new Point(startX, startY);
-        
-        queue.add(start);
-        visited[startX][startY] = true;
-        region.add(start);
+    private TerritoryResult analyzeTerritory(Board board,
+                                             int sx, int sy,
+                                             boolean[][] visited) {
+
+        Queue<Point> queue = new ArrayDeque<>();
+        queue.add(new Point(sx, sy));
+        visited[sx][sy] = true;
+
+        int size = 0;
 
         boolean touchesBlack = false;
         boolean touchesWhite = false;
 
         while (!queue.isEmpty()) {
             Point p = queue.poll();
+            size++;
 
             for (Point n : board.getAdjacentPoints(p.x, p.y)) {
                 Color c = board.get(n.x, n.y);
+
                 if (c == Color.EMPTY) {
                     if (!visited[n.x][n.y]) {
                         visited[n.x][n.y] = true;
-                        region.add(n);
                         queue.add(n);
                     }
-                } else if (c == Color.BLACK) {
+                }
+                else if (c == Color.BLACK) {
                     touchesBlack = true;
-                } else if (c == Color.WHITE) {
+                }
+                else if (c == Color.WHITE) {
                     touchesWhite = true;
                 }
             }
@@ -112,11 +109,9 @@ public class TerritoryCalculator {
 
         Color owner = Color.EMPTY;
         if (touchesBlack && !touchesWhite) owner = Color.BLACK;
-        if (!touchesBlack && touchesWhite) owner = Color.WHITE;
-        
-        // Wywołujemy callback dla każdego punktu w znalezionym regionie
-        for (int i = 0; i < region.size(); i++) {
-             callback.accept(owner);
-        }
+        else if (!touchesBlack && touchesWhite) owner = Color.WHITE;
+        // jeśli oba → punkt niczyj / seki
+
+        return new TerritoryResult(owner, size);
     }
 }

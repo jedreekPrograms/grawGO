@@ -33,4 +33,16 @@ public class GoClient {
     public void sendResign() {
         api.send("RESIGN");
     }
+        public void sendDead(int x, int y) {
+        api.send("DEAD " + x + " " + y);
+    }
+
+    public void sendAccept() {
+        api.send("ACCEPT");
+    }
+
+    public void sendContinue() {
+        api.send("CONTINUE");
+    }
+
 }

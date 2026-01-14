@@ -17,13 +17,14 @@ public class GameState {
         STOPPED,    // Gra zatrzymana (dwa pasy), czas na oznaczanie martwych kamieni
         FINISHED    // Gra zakończona (rezygnacja lub podliczenie punktów)
     }
-
+    private Set<Point> markedDead = new HashSet<>();
+    private final Set<Color> acceptedPlayers = new HashSet<>();
     /** Aktualna plansza gry. */
     private Board board;
 
     /** Kolor gracza, który wykonuje następny ruch. */
     private Color nextToMove;
-
+    private TerritoryCalculator.GameResult finalResult;
     /** Liczba kamieni zbitych przez czarnego gracza. */
     private int blackCaptures;
 
@@ -93,22 +94,32 @@ public class GameState {
      */
     public boolean applyMove(Move move) {
         //if (gameOver) return false;
-        if (status != Status.PLAYING) return false;
-        if (move.getColor() != nextToMove) return false;
+        if (status == Status.FINISHED) return false;
+        if (move.getColor() != nextToMove && status == Status.PLAYING) return false;
 
         if (move.getType() == Move.Type.RESIGN) {
-            status = Status.FINISHED;
-            return true;
+        status = Status.FINISHED;
+        // W przypadku rezygnacji zwycięzcą jest przeciwnik
+        String winner = move.getColor() == Color.BLACK ? "WHITE" : "BLACK";
+        this.finalResult = new TerritoryCalculator.GameResult(0, 0, 6.5, winner);
+        return true;
         }
 
         if (move.getType() == Move.Type.PASS) {
-            // Zasada 8: Dwa pasy z rzędu zatrzymują grę
-            if (lastMoveType == Move.Type.PASS) {
-                status = Status.STOPPED;
-            }
-            switchTurn(Move.Type.PASS);
-            return true;
-        }
+    if (lastMoveType == Move.Type.PASS) {
+        // Drugi pas -> faza oznaczania martwych kamieni
+        System.out.println("Entering scoring");
+        this.status = Status.STOPPED;
+        lastMoveType = null; // resetujemy, żeby DEAD / ACCEPT / CONTINUE działały
+        // **Nie obliczamy wyniku od razu!**
+        return true;
+    } else {
+        lastMoveType = Move.Type.PASS;
+        //switchTurn(Move.Type.PASS);
+        return true;
+    }
+}
+
 
         if (move.getType() == Move.Type.PLACE) {
             // Symulacja ruchu na kopii planszy, aby sprawdzić legalność (Ko i Samobójstwo)
@@ -135,7 +146,8 @@ public class GameState {
             }
 
             previousBoardStates.add(newHash);
-            switchTurn(Move.Type.PLACE);
+            //switchTurn(Move.Type.PLACE);
+            lastMoveType = Move.Type.PLACE;
             return true;
         }
         return false;
@@ -180,13 +192,39 @@ public class GameState {
 
 
     }
-    private void switchTurn(Move.Type type) {
+    private void calculateAndSetScore() {
+    TerritoryCalculator calculator = new TerritoryCalculator();
+    // Przekazujemy pusty zbiór martwych kamieni (uproszczenie dla wersji konsolowej)
+    // oraz komi 6.5
+    this.finalResult = calculator.calculateScore(this, new HashSet<>(), 6.5);
+    // Wypisanie wyniku w konsoli serwera
+    System.out.println("\n--- MECZ ZAKOŃCZONY: PODLICZANIE PUNKTÓW ---");
+    System.out.println("Gracz CZARNY:");
+    System.out.println("  - Zbicia: " + blackCaptures);
+    // Tutaj zakładamy, że wynik terytorialny to wynik końcowy minus zbicia
+    System.out.println("  - Terytorium: " + (finalResult.blackScore() - blackCaptures));
+    System.out.println("  - SUMA: " + finalResult.blackScore());
+    
+    System.out.println("Gracz BIAŁY:");
+    System.out.println("  - Zbicia: " + whiteCaptures);
+    System.out.println("  - Terytorium: " + (finalResult.whiteScore() - whiteCaptures));
+    System.out.println("  - SUMA: " + finalResult.whiteScore());
+    
+    System.out.println("ZWYCIĘZCA: " + finalResult.winner());
+    System.out.println("-------------------------------------------\n");
+}
+public TerritoryCalculator.GameResult getFinalResult() {
+    return finalResult;
+}
+    /*private void switchTurn(Move.Type type) {
         this.lastMoveType = type;
         this.nextToMove = nextToMove.opponent();
-    }
+    }*/
     public void resumeGame() {
         if (status == Status.STOPPED) {
+            markedDead.clear();
             status = Status.PLAYING;
+            
             lastMoveType = null; // Reset licznika pasów
             // nextToMove pozostaje bez zmian (czyli ten, kto miałby ruch po dwóch pasach)
             // lub można wymusić logikę z zasady 8 ("przeciwnik nie może odmówić i gra jako pierwszy").
@@ -197,4 +235,62 @@ public class GameState {
     public boolean isGameOver() {
     return status == Status.FINISHED;
     }
+    
+public boolean toggleDeadStone(Point p) {
+    if (status != Status.STOPPED) return false;
+
+    Color c = board.get(p.x, p.y);
+    if (c == null || c == Color.EMPTY) return false;
+
+    Set<Point> group = board.getGroup(p.x, p.y);
+
+    if (markedDead.contains(p)) {
+        markedDead.removeAll(group);
+    } else {
+        markedDead.addAll(group);
+    }
+
+    acceptedPlayers.clear(); // zmiana -> trzeba ponownie zaakceptować
+    return true;
+}
+
+    public void requestResume() {
+    if (status == Status.STOPPED) {
+        resumeGame();
+    }
+}
+public void confirmEndGame() {
+    if (status != Status.STOPPED) return;
+
+    // 1. Usuń martwe kamienie z planszy
+    for (Point p : markedDead) {
+        Color c = board.get(p.x, p.y);
+        if (c == Color.BLACK) whiteCaptures++;
+        if (c == Color.WHITE) blackCaptures++;
+    }
+    board.removeGroup(markedDead);
+
+    // 2. Oblicz wynik
+    calculateAndSetScore();
+
+    status = Status.FINISHED;
+}
+public Set<Point> getMarkedDead() {
+    return new HashSet<>(markedDead);
+}
+public boolean accept(Color player) {
+    if (status != Status.STOPPED) return false;
+
+    acceptedPlayers.add(player);
+    return acceptedPlayers.size() == 2;
+}
+public void setStatus(Status s){
+    this.status = s;
+}
+public void setNextToMove(Color n){
+    this.nextToMove = n;
+}
+public Move.Type getLastMoveType(){
+    return lastMoveType;
+}
 }

@@ -23,6 +23,11 @@ public class GoBoardDemo extends Application {
     private static final int BOARD_SIZE = 9;
     private static final double CELL = 52;
     private static final double MARGIN = 36;
+    private boolean scoringPhase = false;   // czy jesteśmy po dwóch pasach
+    private final boolean[][] deadMarks = new boolean[BOARD_SIZE][BOARD_SIZE];
+
+    private Button acceptButton;
+    private Button continueButton;
 
     private final Color[][] board = new Color[BOARD_SIZE][BOARD_SIZE];
 
@@ -43,10 +48,6 @@ public class GoBoardDemo extends Application {
     private Label passLabel;
     private boolean winner;
 
-    private double myFinalScore = 0;
-    private double opponentFinalScore = 0;
-
-
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -63,6 +64,15 @@ public class GoBoardDemo extends Application {
 
         Button resignButton = new Button("RESIGN");
         resignButton.getStyleClass().add("resign-button");
+
+        acceptButton = new Button("ACCEPT");
+        acceptButton.getStyleClass().add("accept-button");
+        acceptButton.setDisable(true);
+
+        continueButton = new Button("CONTINUE");
+        continueButton.getStyleClass().add("continue-button");
+        continueButton.setDisable(true);
+
 
         turnLabel = new Label("Waiting for opponent...");
         turnLabel.getStyleClass().add("title-label");
@@ -84,7 +94,8 @@ public class GoBoardDemo extends Application {
         capturedBox.getStyleClass().addAll("card", "side-panel");
 
         VBox statusBox = new VBox(6, turnLabel, colorLabel);
-        HBox actionsBox = new HBox(10, passButton, resignButton);
+        HBox actionsBox = new HBox(10, passButton, resignButton, acceptButton, continueButton);
+
 
         HBox infoBox = new HBox(20, statusBox, actionsBox, passLabel);
         infoBox.getStyleClass().add("top-bar");
@@ -92,20 +103,32 @@ public class GoBoardDemo extends Application {
 
         passButton.setOnAction(e -> client.sendPass());
         resignButton.setOnAction(e -> client.sendResign());
+        acceptButton.setOnAction(e -> client.sendAccept());
+        continueButton.setOnAction(e -> client.sendContinue());
+
+
 
         canvas.setOnMouseClicked(e -> {
-            if (!myTurn) return;
 
-            int x = (int) ((e.getX() - MARGIN + CELL / 2) / CELL);
-            int y = (int) ((e.getY() - MARGIN + CELL / 2) / CELL);
+    int x = (int) ((e.getX() - MARGIN + CELL / 2) / CELL);
+    int y = (int) ((e.getY() - MARGIN + CELL / 2) / CELL);
 
-            if (x < 0 || y < 0 || x >= BOARD_SIZE || y >= BOARD_SIZE) return;
-            if (board[x][y] != Color.EMPTY) return;
+    if (x < 0 || y < 0 || x >= BOARD_SIZE || y >= BOARD_SIZE) return;
 
-            client.sendMove(x, y);
-            myTurn = false;
-            updateTurnLabel();
-        });
+    // === TRYB OZNACZANIA MARTWYCH ===
+    if (scoringPhase) {
+        if (board[x][y] == Color.EMPTY) return;
+
+        client.sendDead(x, y);
+        return;
+    }
+
+    // === TRYB NORMALNEJ GRY ===
+    if (board[x][y] != Color.EMPTY) return;
+
+    client.sendMove(x, y);
+    updateTurnLabel();
+});
 
         StackPane centerPane = new StackPane(canvas);
         centerPane.getStyleClass().add("card");
@@ -153,53 +176,34 @@ public class GoBoardDemo extends Application {
             return;
         }
 
-        if (msg.startsWith("BOARD")) {
-            String[] parts = msg.split(" ", 3);
-            String boardStr = parts[2];
-            loadBoard(boardStr);
-            redraw();
+            if (msg.startsWith("BOARD")) {
+            handleBoardMessage(msg);
+            return;
         }
-
-        if (msg.startsWith("SCORE")) {
-            String[] p = msg.split(" ");
-            double black = Double.parseDouble(p[1]);
-            double white = Double.parseDouble(p[2]);
-            String winnerColor = p[3];
-
-            // przypisujemy do naszych zmiennych
-            if (myColor == Color.BLACK) {
-                myFinalScore = black;
-                opponentFinalScore = white;
-            } else {
-                myFinalScore = white;
-                opponentFinalScore = black;
-            }
-
-            boolean iWin =
-                    (winnerColor.equals("BLACK") && myColor == Color.BLACK) ||
-                            (winnerColor.equals("WHITE") && myColor == Color.WHITE);
-
-            Platform.runLater(() -> {
-                turnLabel.setText("Game Over");
-                passLabel.setVisible(true);
-                passLabel.getStyleClass().removeAll("win", "lose");
-
-                passLabel.setText(
-                        "BLACK: " + black + " | WHITE: " + white +
-                                "\n" + (iWin ? "YOU WIN 🎉" : "YOU LOSE 💀")
-                );
-
-                passLabel.getStyleClass().add(iWin ? "win" : "lose");
-
-                // 🔹 dodatkowo aktualizujemy boczny panel
-                myCapturedLabel.setText("You: " + myFinalScore);
-                opponentCapturedLabel.setText("Opponent: " + opponentFinalScore);
-            });
+            if (msg.startsWith("ACCEPTED")) {
+            return; // tylko informacyjne
         }
+        if (msg.startsWith("GAME_RESUMED")) {
+    String[] parts = msg.split(" ");
+    Color next = Color.valueOf(parts[1]);
+    
+    scoringPhase = false;
+    acceptButton.setDisable(true);
+    continueButton.setDisable(true);
+    
+    myTurn = (myColor == next);
+    updateTurnLabel();
+    redraw();
+    return;
+}
 
-
-
-
+        
+        if(msg.startsWith("STOPPED")){
+            scoringPhase = true;
+            acceptButton.setDisable(false);
+    continueButton.setDisable(false);
+    updateTurnLabel();
+        }
 
         if (msg.startsWith("MOVE")) {
             String[] p = msg.split(" ");
@@ -228,7 +232,8 @@ public class GoBoardDemo extends Application {
         }
 
         if (msg.startsWith("PASS")) {
-            myTurn = !myTurn;
+            Color c = Color.valueOf(msg.split(" ")[1]);
+            myTurn = c != myColor;
             updateTurnLabel();
         }
 
@@ -339,6 +344,15 @@ public class GoBoardDemo extends Application {
                             : javafx.scene.paint.Color.web("#F9FAFB"));
 
                     gc.fillOval(cx - 16, cy - 16, 32, 32);
+
+                    // === OZNACZENIE MARTWYCH ===
+                    if (deadMarks[x][y]) {
+                        gc.setStroke(javafx.scene.paint.Color.RED);
+                        gc.setLineWidth(3);
+                        gc.strokeLine(cx - 12, cy - 12, cx + 12, cy + 12);
+                        gc.strokeLine(cx - 12, cy + 12, cx + 12, cy - 12);
+                    }
+
                 }
             }
         }
@@ -347,4 +361,39 @@ public class GoBoardDemo extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+
+    private void handleBoardMessage(String msg) {
+
+    // reset oznaczeń
+    for (int x = 0; x < BOARD_SIZE; x++)
+        for (int y = 0; y < BOARD_SIZE; y++)
+            deadMarks[x][y] = false;
+
+    String[] parts = msg.split(" ", 4);
+
+    String boardStr = parts[2];
+    loadBoard(boardStr);
+
+    scoringPhase = false;
+
+    if (parts.length == 4 && parts[3].startsWith("DEAD")) {
+        scoringPhase = true;
+
+        String[] deadParts = parts[3].split(" ");
+        for (int i = 1; i < deadParts.length; i++) {
+            String[] xy = deadParts[i].split(",");
+            int x = Integer.parseInt(xy[0]);
+            int y = Integer.parseInt(xy[1]);
+            deadMarks[x][y] = true;
+        }
+    }
+
+    Platform.runLater(() -> {
+        acceptButton.setDisable(!scoringPhase);
+        continueButton.setDisable(!scoringPhase);
+        redraw();
+    });
+}
+
+
 }
