@@ -6,7 +6,7 @@ import pl.edu.go.model.Point;
 import pl.edu.go.model.MoveFactory;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
-
+import pl.edu.go.model.GameState;
 /**
  * Implementacja komendy wykonania ruchu w grze Go.
  * Odpowiada za przesłanie ruchu do sesji, walidację oraz powiadomienie graczy.
@@ -17,7 +17,7 @@ public class MoveCommand implements GameCommand {
 
     @Override
     public boolean execute(String[] args, GameSession session, ClientConnection sender) {
-
+        GameState game = session.getGame();
         if (args.length != 2) {
             sender.send("ERROR MOVE x y");
             return false;
@@ -38,11 +38,15 @@ public class MoveCommand implements GameCommand {
             sender.send("ILLEGAL MOVE");
             return false;
         }
-
+        if(session.getPlayerColor(sender) == Color.BLACK){
+            game.setNextToMove(Color.WHITE);
+        }else{
+            game.setNextToMove(Color.BLACK);
+        }
         int captured = session.getGame().getBoard().getTotalCaptured();
         session.sendToBoth("MOVE " + color + " " + x + " " + y + " " + captured);
         session.sendBoardToBoth();
-        session.setLicznikPass(0);
+        //session.setLicznikPass(0);
 
         return true;
     }

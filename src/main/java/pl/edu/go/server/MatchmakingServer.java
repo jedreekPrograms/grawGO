@@ -1,6 +1,9 @@
 package pl.edu.go.server;
 
+import pl.edu.go.server.commandInterfaces.AcceptCommand;
 import pl.edu.go.server.commandInterfaces.CommandRegistry;
+import pl.edu.go.server.commandInterfaces.ContinueCommand;
+import pl.edu.go.server.commandInterfaces.DeadCommand;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 import pl.edu.go.server.networkInterfaces.MessageListener;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
@@ -60,6 +63,10 @@ public class MatchmakingServer {
                 registry.register("PASS", new pl.edu.go.server.commandInterfaces.PassCommand());
                 registry.register("RESIGN", new pl.edu.go.server.commandInterfaces.ResignCommand());
                 registry.register("FINAL", new pl.edu.go.server.commandInterfaces.FinalCommand());
+                registry.register("DEAD", new DeadCommand());
+                registry.register("CONTINUE", new ContinueCommand());
+                registry.register("ACCEPT", new AcceptCommand());
+
                 //tu rozmiar dodalem
                 GameSession session = new GameSession(player1, player2, 9, registry);
 
