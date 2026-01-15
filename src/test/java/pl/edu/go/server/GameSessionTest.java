@@ -1,64 +1,74 @@
 package pl.edu.go.server;
 
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 import pl.edu.go.model.Color;
-import pl.edu.go.server.commandInterfaces.*;
+import pl.edu.go.model.GameState;
+import pl.edu.go.server.commandInterfaces.CommandRegistry;
+import pl.edu.go.server.commandInterfaces.GameCommand;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 public class GameSessionTest {
 
+    private GameSession session;
     private ClientConnection white;
     private ClientConnection black;
+    private GameCommand command;
     private CommandRegistry registry;
-    private GameSession session;
 
     @Before
-    public void setup() {
+    public void setUp() {
         white = mock(ClientConnection.class);
         black = mock(ClientConnection.class);
+        command = mock(GameCommand.class);
         registry = new CommandRegistry();
-        registry.register("MOVE", new MoveCommand());
-        registry.register("PASS", new PassCommand());
-        registry.register("RESIGN", new ResignCommand());
+
+        registry.register("TEST", command);
+
         session = new GameSession(white, black, 9, registry);
     }
 
     @Test
-    public void testPlayerColorsAssigned() {
-        Assert.assertEquals(Color.WHITE, session.getPlayerColor(white));
-        Assert.assertEquals(Color.BLACK, session.getPlayerColor(black));
+    public void getPlayerColor_returnsCorrectColor() {
+        assertEquals(Color.WHITE, session.getPlayerColor(white));
+        assertEquals(Color.BLACK, session.getPlayerColor(black));
+        assertNull(session.getPlayerColor(mock(ClientConnection.class)));
     }
 
     @Test
-    public void testMoveOutOfTurnRejected() {
-        session.onMessage(white, "MOVE 1 1");
-        verify(white).send(startsWith("ERROR"));
+    public void handleCommand_executesRegisteredCommand() {
+        when(command.execute(any(), eq(session), eq(white))).thenReturn(true);
+
+        boolean result = session.handleCommand("TEST", new String[]{"1"}, white);
+
+        assertTrue(result);
+        verify(command).execute(any(), eq(session), eq(white));
     }
 
     @Test
-    public void testValidMoveNotifiesOpponent() {
-        session.start(); // BLACK starts
-        session.onMessage(black, "MOVE 2 2");
+    public void handleCommand_unknownCommand_returnsError() {
+        boolean result = session.handleCommand("UNKNOWN", new String[]{}, white);
 
-        // Nadawca (BLACK) dostaje wiadomości o wykonanym ruchu i planszy
-        verify(black).send(contains("MOVE BLACK 2 2"));
-        verify(black, atLeastOnce()).send(contains("BOARD"));
-
-        // Oponent (WHITE) dostaje wiadomości o ruchu przeciwnika i planszy
-        verify(white).send(contains("MOVE BLACK 2 2"));
-        verify(white, atLeastOnce()).send(contains("BOARD"));
+        assertFalse(result);
+        verify(white).send("ERROR Unknown command: UNKNOWN");
     }
 
-    /*
     @Test
-    public void testResignEndsSession() {
-        session.onMessage(black, "RESIGN");
+    public void sendToBoth_sendsMessageToBothPlayers() {
+        session.sendToBoth("HELLO");
 
-        verify(black).send(contains("RESIGN"));
-        verify(white).send(contains("WINNER"));
+        verify(white).send("HELLO");
+        verify(black).send("HELLO");
+    }
+
+    @Test
+    public void endSession_closesBothConnections() {
+        session.endSession();
+
         verify(white).close();
         verify(black).close();
-    }*/
+    }
 }

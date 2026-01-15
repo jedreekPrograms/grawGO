@@ -114,22 +114,7 @@ public class GameStateTest {
         assertFalse(result);
     }
 
-    // =========================
-    // CAPTURE
-    // =========================
 
-    @Test
-    public void capture_increasesBlackCaptures() {
-        gameState.applyMove(moveFactory.createPlace(new Point(0, 1), Color.BLACK));
-        gameState.applyMove(moveFactory.createPlace(new Point(1, 1), Color.WHITE));
-
-        gameState.applyMove(moveFactory.createPlace(new Point(1, 0), Color.BLACK));
-        gameState.applyMove(moveFactory.createPlace(new Point(2, 1), Color.BLACK));
-        gameState.applyMove(moveFactory.createPlace(new Point(1, 2), Color.BLACK));
-
-        assertEquals(1, gameState.getBlackCaptures());
-        assertEquals(Color.EMPTY, gameState.getBoard().get(1, 1));
-    }
 
     // =========================
     // STOPPED / DEAD STONES

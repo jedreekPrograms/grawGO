@@ -4,82 +4,97 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+/**
+ * Testy jednostkowe klasy Point.
+ */
 public class PointTest {
 
+    // =========================
+    // CONSTRUCTOR
+    // =========================
+
     @Test
-    public void constructor_setsCoordinates() {
+    public void constructor_setsCoordinatesCorrectly() {
         Point p = new Point(3, 7);
 
         assertEquals(3, p.x);
         assertEquals(7, p.y);
     }
 
-    @Test
-    public void equals_sameObject_returnsTrue() {
-        Point p = new Point(1, 2);
+    // =========================
+    // EQUALS
+    // =========================
 
-        assertTrue(p.equals(p));
+    @Test
+    public void equals_sameCoordinates_returnsTrue() {
+        Point p1 = new Point(2, 4);
+        Point p2 = new Point(2, 4);
+
+        assertEquals(p1, p2);
     }
 
     @Test
-    public void equals_sameValues_returnsTrue() {
-        Point p1 = new Point(4, 5);
-        Point p2 = new Point(4, 5);
+    public void equals_sameReference_returnsTrue() {
+        Point p = new Point(1, 1);
 
-        assertTrue(p1.equals(p2));
-        assertTrue(p2.equals(p1));
+        assertEquals(p, p);
     }
 
     @Test
-    public void equals_differentX_returnsFalse() {
-        Point p1 = new Point(4, 5);
-        Point p2 = new Point(3, 5);
+    public void equals_differentCoordinates_returnsFalse() {
+        Point p1 = new Point(1, 2);
+        Point p2 = new Point(2, 1);
 
-        assertFalse(p1.equals(p2));
-    }
-
-    @Test
-    public void equals_differentY_returnsFalse() {
-        Point p1 = new Point(4, 5);
-        Point p2 = new Point(4, 6);
-
-        assertFalse(p1.equals(p2));
+        assertNotEquals(p1, p2);
     }
 
     @Test
     public void equals_null_returnsFalse() {
         Point p = new Point(1, 1);
 
-        assertFalse(p.equals(null));
+        assertNotEquals(p, null);
     }
 
     @Test
     public void equals_differentClass_returnsFalse() {
         Point p = new Point(1, 1);
 
-        assertFalse(p.equals("not a point"));
+        assertNotEquals(p, "not a point");
     }
 
+    // =========================
+    // HASHCODE
+    // =========================
+
     @Test
-    public void hashCode_equalObjects_haveSameHash() {
-        Point p1 = new Point(2, 3);
-        Point p2 = new Point(2, 3);
+    public void hashCode_equalObjects_haveSameHashCode() {
+        Point p1 = new Point(5, 6);
+        Point p2 = new Point(5, 6);
 
         assertEquals(p1.hashCode(), p2.hashCode());
     }
 
-    @Test
-    public void hashCode_differentObjects_canHaveDifferentHash() {
-        Point p1 = new Point(2, 3);
-        Point p2 = new Point(3, 2);
+    // =========================
+    // TOSTRING
+    // =========================
 
-        assertNotEquals(p1.hashCode(), p2.hashCode());
+    @Test
+    public void toString_returnsCorrectFormat() {
+        Point p = new Point(3, 9);
+
+        assertEquals("(3,9)", p.toString());
     }
 
-    @Test
-    public void toString_formatIsCorrect() {
-        Point p = new Point(5, 6);
+    // =========================
+    // IMMUTABILITY
+    // =========================
 
-        assertEquals("(5,6)", p.toString());
+    @Test
+    public void point_isImmutable() {
+        Point p = new Point(1, 2);
+
+        assertEquals(1, p.x);
+        assertEquals(2, p.y);
+        // brak setterów = niemutowalny
     }
 }

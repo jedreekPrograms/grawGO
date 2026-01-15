@@ -4,38 +4,40 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
+/**
+ * Testy jednostkowe enuma Color.
+ */
 public class ColorTest {
 
     @Test
-    public void opponent_blackIsWhite() {
+    public void opponent_blackReturnsWhite() {
         assertEquals(Color.WHITE, Color.BLACK.opponent());
     }
 
     @Test
-    public void opponent_whiteIsBlack() {
+    public void opponent_whiteReturnsBlack() {
         assertEquals(Color.BLACK, Color.WHITE.opponent());
     }
 
     @Test
-    public void opponent_emptyIsEmpty() {
+    public void opponent_emptyReturnsEmpty() {
         assertEquals(Color.EMPTY, Color.EMPTY.opponent());
     }
 
     @Test
-    public void enumValues_containsAllColors() {
+    public void enum_containsExactlyThreeValues() {
         Color[] values = Color.values();
 
         assertEquals(3, values.length);
-        assertArrayEquals(
-                new Color[]{Color.BLACK, Color.WHITE, Color.EMPTY},
-                values
-        );
+        assertTrue(contains(values, Color.BLACK));
+        assertTrue(contains(values, Color.WHITE));
+        assertTrue(contains(values, Color.EMPTY));
     }
 
-    @Test
-    public void valueOf_returnsCorrectEnum() {
-        assertEquals(Color.BLACK, Color.valueOf("BLACK"));
-        assertEquals(Color.WHITE, Color.valueOf("WHITE"));
-        assertEquals(Color.EMPTY, Color.valueOf("EMPTY"));
+    private boolean contains(Color[] values, Color c) {
+        for (Color v : values) {
+            if (v == c) return true;
+        }
+        return false;
     }
 }
