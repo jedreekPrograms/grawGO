@@ -231,6 +231,34 @@ public class GoBoardDemo extends Application {
             updateTurnLabel();
         }
 
+        if (msg.startsWith("GAME_END")) {
+    String[] parts = msg.split(" ");
+    // Format: GAME_END blackScore whiteScore winner
+    String bScore = parts[1];
+    String wScore = parts[2];
+    String winnerName = parts[3];
+
+    Platform.runLater(() -> {
+        // Blokada przycisków
+        acceptButton.setDisable(true);
+        continueButton.setDisable(true);
+        scoringPhase = false;
+        if(myColor == Color.BLACK){
+        myCapturedLabel.setText("You: " + bScore);
+        opponentCapturedLabel.setText("Opponent: " + wScore);
+        }else{
+           myCapturedLabel.setText("You: " + wScore);
+        opponentCapturedLabel.setText("Opponent: " + bScore); 
+        }
+        
+        // Możesz też użyć istniejącej metody do pokazania dużego napisu na środku
+        winner = (myColor.toString().equals(winnerName));
+        updateWinLabel(); 
+        
+    });
+    return;
+}
+
         if (msg.startsWith("PASS")) {
             Color c = Color.valueOf(msg.split(" ")[1]);
             myTurn = c != myColor;
