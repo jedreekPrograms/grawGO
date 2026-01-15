@@ -374,7 +374,7 @@ public class GoBoardDemo extends Application {
     String boardStr = parts[2];
     loadBoard(boardStr);
 
-    scoringPhase = false;
+    //scoringPhase = false;
 
     if (parts.length == 4 && parts[3].startsWith("DEAD")) {
         scoringPhase = true;
