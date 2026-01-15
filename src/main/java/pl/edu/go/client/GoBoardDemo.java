@@ -26,8 +26,8 @@ public class GoBoardDemo extends Application {
     private boolean scoringPhase = false;   // czy jesteśmy po dwóch pasach
     private final boolean[][] deadMarks = new boolean[BOARD_SIZE][BOARD_SIZE];
 
-    private Button acceptButton;
-    private Button continueButton;
+    Button acceptButton;
+    Button continueButton;
 
     private final Color[][] board = new Color[BOARD_SIZE][BOARD_SIZE];
 
@@ -38,14 +38,14 @@ public class GoBoardDemo extends Application {
     private Color myColor;
     private boolean myTurn = false;
 
-    private Label turnLabel;
-    private Label colorLabel;
+    Label turnLabel;
+    Label colorLabel;
 
     private int myCaptured = 0;
     private int opponentCaptured = 0;
-    private Label myCapturedLabel;
-    private Label opponentCapturedLabel;
-    private Label passLabel;
+    Label myCapturedLabel;
+    Label opponentCapturedLabel;
+    Label passLabel;
     private boolean winner;
 
     @Override
