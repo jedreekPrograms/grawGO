@@ -15,33 +15,42 @@ public class PassCommand implements GameCommand {
 
     private final MoveFactory moveFactory = new MoveFactory();
 
-
     @Override
     public boolean execute(String[] args, GameSession session, ClientConnection sender) {
         GameState game = session.getGame();
         Color color = session.getPlayerColor(sender);
-        Move move = moveFactory.createPass(color);
-        if (game.getLastMoveType() == Type.PASS) {
-            System.out.println("Scoring pass");
-            session.sendToBoth("STOPPED");
-        }
-        if(session.getPlayerColor(sender) == Color.BLACK){
-            game.setNextToMove(Color.WHITE);
-        }else{
-            game.setNextToMove(Color.BLACK);
-        }
-        session.sendToBoth("PASS " + color);
-        game.applyMove(move);
         
-        //int licznikPass = session.getLicznikPass();
+        // Upewnij się, że to tura tego gracza (zabezpieczenie)
+        if (game.getNextToMove() != color) {
+            return false;
+        }
 
-        //if (licznikPass < 2) {
-            //session.sendToBoth("PASS " + color);
-            //licznikPass++;
-            //session.setLicznikPass(licznikPass);
-        //} else {
+        Move move = moveFactory.createPass(color);
 
-        //}
+        // 1. Najpierw aplikujemy ruch w modelu
+        // GameState ustawi status STOPPED jeśli to drugi pas, ale NIE zmieni nextToMove
+        boolean success = game.applyMove(move);
+        
+        if (!success) {
+            return false; 
+        }
+
+        // 2. Wysyłamy info o pasie
+        session.sendToBoth("PASS " + color);
+
+        // 3. Sprawdzamy, jaki jest status gry PO wykonaniu ruchu
+        if (game.getStatus() == GameState.Status.STOPPED) {
+            // Jeśli gra weszła w stan oznaczania kamieni -> wysyłamy STOPPED
+            session.sendToBoth("STOPPED");
+            // Nie zmieniamy nextToMove, bo gra jest zatrzymana
+        } else {
+            // 4. Jeśli gra nadal trwa (Status.PLAYING), to Komenda zmienia turę
+            if (color == Color.BLACK) {
+                game.setNextToMove(Color.WHITE);
+            } else {
+                game.setNextToMove(Color.BLACK);
+            }
+        }
 
         return true;
     }
