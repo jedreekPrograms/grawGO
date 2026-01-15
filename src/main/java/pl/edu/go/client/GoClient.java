@@ -16,6 +16,13 @@ public class GoClient {
         this.ui = ui;
     }
 
+    // konstruktor testowy
+    GoClient(ServerAPI api, GoBoardDemo ui) {
+        this.api = api;
+        this.ui = ui;
+    }
+
+
     public void run() {
         api.setMessageListener(msg ->
                 Platform.runLater(() -> ui.handleServerMessage(msg))
