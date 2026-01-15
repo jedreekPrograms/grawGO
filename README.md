@@ -1,6 +1,6 @@
 # Gra w GO
 
-Prosty program napisany w technologii klient-serwer w języku Java. Obsługuje większość zasady gry Go takich jak kładzenie kamieni,obsługa łańcuchów, duszenia, zapobiegania ko i samobójstw. Obecna rozgrywka odbywa sie na planszy 9 x 9
+Prosty program napisany w technologii klient-serwer w języku Java. Obsługuje większość zasady gry Go takich jak kładzenie kamieni,obsługa łańcuchów, duszenia, zapobiegania ko i samobójstw. Obecna rozgrywka odbywa sie na planszy 9 x 9. Obecna rekompensata za granie białymi(komi) wynosi 6.5 pkt.
 
 ## Instrukcja gry
 
