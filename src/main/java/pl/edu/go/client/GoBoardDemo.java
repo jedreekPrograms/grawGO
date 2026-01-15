@@ -17,18 +17,24 @@ import pl.edu.go.model.Color;
 
 import java.io.IOException;
 import java.util.Objects;
-
+/**
+ * Główna klasa aplikacji JavaFX dla klienta gry Go.
+ * Odpowiada za graficzny interfejs użytkownika, renderowanie planszy,
+ * obsługę zdarzeń myszy oraz procesowanie komunikatów z serwera.
+ */
 public class GoBoardDemo extends Application {
-
     private static final int BOARD_SIZE = 9;
     private static final double CELL = 52;
     private static final double MARGIN = 36;
-    private boolean scoringPhase = false;   // czy jesteśmy po dwóch pasach
+    /** Flaga określająca, czy gra jest w fazie liczenia punktów (oznaczanie martwych kamieni). */
+    private boolean scoringPhase = false;
+    /** Przechowuje informacje o kamieniach oznaczonych jako martwe przez graczy. */
     private final boolean[][] deadMarks = new boolean[BOARD_SIZE][BOARD_SIZE];
 
-    Button acceptButton;
-    Button continueButton;
+    private Button acceptButton;
+    private Button continueButton;
 
+    /** Lokalna reprezentacja stanu planszy (układ kamieni). */
     private final Color[][] board = new Color[BOARD_SIZE][BOARD_SIZE];
 
     private Canvas canvas;
@@ -38,16 +44,21 @@ public class GoBoardDemo extends Application {
     private Color myColor;
     private boolean myTurn = false;
 
-    Label turnLabel;
-    Label colorLabel;
+    private Label turnLabel;
+    private Label colorLabel;
 
     private int myCaptured = 0;
     private int opponentCaptured = 0;
-    Label myCapturedLabel;
-    Label opponentCapturedLabel;
-    Label passLabel;
+    private Label myCapturedLabel;
+    private Label opponentCapturedLabel;
+    private Label passLabel;
     private boolean winner;
-
+    /**
+     * Inicjalizuje komponenty UI, ustawia obsługę zdarzeń dla planszy i przycisków
+     * oraz uruchamia wątek komunikacji z serwerem.
+     * @param stage Główne okno aplikacji.
+     * @throws IOException W przypadku problemów z załadowaniem stylów CSS lub połączeniem.
+     */
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -107,28 +118,28 @@ public class GoBoardDemo extends Application {
         continueButton.setOnAction(e -> client.sendContinue());
 
 
-
+        // Obsługa kliknięć na planszy: ruchy lub oznaczanie martwych kamieni
         canvas.setOnMouseClicked(e -> {
 
-    int x = (int) ((e.getX() - MARGIN + CELL / 2) / CELL);
-    int y = (int) ((e.getY() - MARGIN + CELL / 2) / CELL);
+            int x = (int) ((e.getX() - MARGIN + CELL / 2) / CELL);
+            int y = (int) ((e.getY() - MARGIN + CELL / 2) / CELL);
 
-    if (x < 0 || y < 0 || x >= BOARD_SIZE || y >= BOARD_SIZE) return;
+            if (x < 0 || y < 0 || x >= BOARD_SIZE || y >= BOARD_SIZE) return;
 
-    // === TRYB OZNACZANIA MARTWYCH ===
-    if (scoringPhase) {
-        if (board[x][y] == Color.EMPTY) return;
+            // TRYB OZNACZANIA MARTWYCH (faza końcowa)
+            if (scoringPhase) {
+                if (board[x][y] == Color.EMPTY) return;
 
-        client.sendDead(x, y);
-        return;
-    }
+                client.sendDead(x, y);
+                return;
+            }
 
-    // === TRYB NORMALNEJ GRY ===
-    if (board[x][y] != Color.EMPTY) return;
+            // TRYB NORMALNEJ GRY
+            if (board[x][y] != Color.EMPTY) return;
 
-    client.sendMove(x, y);
-    updateTurnLabel();
-});
+            client.sendMove(x, y);
+            updateTurnLabel();
+        });
 
         StackPane centerPane = new StackPane(canvas);
         centerPane.getStyleClass().add("card");
@@ -150,12 +161,18 @@ public class GoBoardDemo extends Application {
         stage.setTitle("Go");
         stage.show();
 
+        // Połączenie z serwerem
         client = new GoClient("localhost", 5000, this);
         new Thread(client::run).start();
     }
 
-    /* ===================== SERVER ===================== */
+    /* ===================== KOMUNIKACJA Z SERWEREM ===================== */
 
+    /**
+     * Główny dyspozytor komunikatów przychodzących z serwera.
+     * Aktualizuje stan gry i interfejs na podstawie otrzymanego protokołu.
+     * @param msg Surowy komunikat tekstowy z serwera.
+     */
     public void handleServerMessage(String msg) {
 
         if (msg.startsWith("START")) {
@@ -184,25 +201,24 @@ public class GoBoardDemo extends Application {
             return; // tylko informacyjne
         }
         if (msg.startsWith("GAME_RESUMED")) {
-    String[] parts = msg.split(" ");
-    Color next = Color.valueOf(parts[1]);
-    
-    scoringPhase = false;
-    acceptButton.setDisable(true);
-    continueButton.setDisable(true);
-    
-    myTurn = (myColor == next);
-    updateTurnLabel();
-    redraw();
-    return;
-}
-
+            String[] parts = msg.split(" ");
+            Color next = Color.valueOf(parts[1]);
+            
+            scoringPhase = false;
+            acceptButton.setDisable(true);
+            continueButton.setDisable(true);
+            
+            myTurn = (myColor == next);
+            updateTurnLabel();
+            redraw();
+            return;
+        }
         
         if(msg.startsWith("STOPPED")){
             scoringPhase = true;
             acceptButton.setDisable(false);
-    continueButton.setDisable(false);
-    updateTurnLabel();
+            continueButton.setDisable(false);
+            updateTurnLabel();
         }
 
         if (msg.startsWith("MOVE")) {
@@ -232,32 +248,29 @@ public class GoBoardDemo extends Application {
         }
 
         if (msg.startsWith("GAME_END")) {
-    String[] parts = msg.split(" ");
-    // Format: GAME_END blackScore whiteScore winner
-    String bScore = parts[1];
-    String wScore = parts[2];
-    String winnerName = parts[3];
+            String[] parts = msg.split(" ");
+            String bScore = parts[1];
+            String wScore = parts[2];
+            String winnerName = parts[3];
 
-    Platform.runLater(() -> {
-        // Blokada przycisków
-        acceptButton.setDisable(true);
-        continueButton.setDisable(true);
-        scoringPhase = false;
-        if(myColor == Color.BLACK){
-        myCapturedLabel.setText("You: " + bScore);
-        opponentCapturedLabel.setText("Opponent: " + wScore);
-        }else{
-           myCapturedLabel.setText("You: " + wScore);
-        opponentCapturedLabel.setText("Opponent: " + bScore); 
+            Platform.runLater(() -> {
+                acceptButton.setDisable(true);
+                continueButton.setDisable(true);
+                scoringPhase = false;
+                if(myColor == Color.BLACK){
+                myCapturedLabel.setText("You: " + bScore);
+                opponentCapturedLabel.setText("Opponent: " + wScore);
+                }else{
+                myCapturedLabel.setText("You: " + wScore);
+                opponentCapturedLabel.setText("Opponent: " + bScore); 
+                }
+                
+                winner = (myColor.toString().equals(winnerName));
+                updateWinLabel(); 
+                
+            });
+            return;
         }
-        
-        // Możesz też użyć istniejącej metody do pokazania dużego napisu na środku
-        winner = (myColor.toString().equals(winnerName));
-        updateWinLabel(); 
-        
-    });
-    return;
-}
 
         if (msg.startsWith("PASS")) {
             Color c = Color.valueOf(msg.split(" ")[1]);
@@ -271,7 +284,10 @@ public class GoBoardDemo extends Application {
             updateWinLabel();
         }
     }
-
+    /**
+     * Parsuje tekstową reprezentację planszy i aktualizuje lokalną tablicę 2D.
+     * @param s Ciąg znaków reprezentujący planszę (rzędy oddzielone '/').
+     */
     private void loadBoard(String s) {
         String[] rows = s.split("/");
 
@@ -289,6 +305,9 @@ public class GoBoardDemo extends Application {
 
     /* ===================== UI ===================== */
 
+    /**
+     * Aktualizuje tekst i styl etykiety informującej o turze gracza.
+     */
     private void updateTurnLabel() {
         Platform.runLater(() -> {
             turnLabel.getStyleClass().removeAll("turn-your", "turn-opponent");
@@ -302,6 +321,9 @@ public class GoBoardDemo extends Application {
         });
     }
 
+    /**
+     * Wyświetla komunikat o wygranej lub przegranej po zakończeniu partii.
+     */
     private void updateWinLabel() {
         Platform.runLater(() -> {
             turnLabel.setText("Game Over");
@@ -317,10 +339,12 @@ public class GoBoardDemo extends Application {
         });
     }
 
-    /* ===================== DRAWING ===================== */
+    /* ===================== RYSOWANIE ===================== */
 
+    /**
+     * Rysuje drewniane tło planszy oraz linie siatki Go.
+     */
     private void drawBoard() {
-        // ciepłe, jasne drewno – pasuje do białego UI
         gc.setFill(javafx.scene.paint.Color.web("#E3C58F"));
         gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
@@ -336,8 +360,11 @@ public class GoBoardDemo extends Application {
         drawStarPoints();
     }
 
+    /**
+     * Rysuje tradycyjne punkty gwiazdowe (Hoshi)
+     */
     private void drawStarPoints() {
-        int[] hoshi = {2, 4, 6}; // rogi + środek
+        int[] hoshi = {2, 4, 6};
 
         gc.setFill(javafx.scene.paint.Color.web("#2F2F2F"));
 
@@ -352,6 +379,10 @@ public class GoBoardDemo extends Application {
         }
     }
 
+    /**
+     * Odświeża cały widok planszy, rysując tło, kamienie, cienie
+     * oraz czerwone krzyżyki na kamieniach oznaczonych jako martwe.
+     */
     private void redraw() {
         drawBoard();
 
@@ -390,38 +421,39 @@ public class GoBoardDemo extends Application {
         launch(args);
     }
 
+    /**
+     * Obsługuje specyficzny komunikat BOARD z serwera, który zawiera układ kamieni
+     * oraz opcjonalną listę współrzędnych martwych kamieni.
+     * @param msg Pełna treść wiadomości protokołu BOARD.
+     */
     private void handleBoardMessage(String msg) {
 
-    // reset oznaczeń
-    for (int x = 0; x < BOARD_SIZE; x++)
-        for (int y = 0; y < BOARD_SIZE; y++)
-            deadMarks[x][y] = false;
+        for (int x = 0; x < BOARD_SIZE; x++)
+            for (int y = 0; y < BOARD_SIZE; y++)
+                deadMarks[x][y] = false;
 
-    String[] parts = msg.split(" ", 4);
+        String[] parts = msg.split(" ", 4);
 
-    String boardStr = parts[2];
-    loadBoard(boardStr);
+        String boardStr = parts[2];
+        loadBoard(boardStr);
 
-    //scoringPhase = false;
+        // Sprawdzenie, czy dołączona jest informacja o martwych kamieniach
+        if (parts.length == 4 && parts[3].startsWith("DEAD")) {
+            scoringPhase = true;
 
-    if (parts.length == 4 && parts[3].startsWith("DEAD")) {
-        scoringPhase = true;
-
-        String[] deadParts = parts[3].split(" ");
-        for (int i = 1; i < deadParts.length; i++) {
-            String[] xy = deadParts[i].split(",");
-            int x = Integer.parseInt(xy[0]);
-            int y = Integer.parseInt(xy[1]);
-            deadMarks[x][y] = true;
+            String[] deadParts = parts[3].split(" ");
+            for (int i = 1; i < deadParts.length; i++) {
+                String[] xy = deadParts[i].split(",");
+                int x = Integer.parseInt(xy[0]);
+                int y = Integer.parseInt(xy[1]);
+                deadMarks[x][y] = true;
+            }
         }
+
+        Platform.runLater(() -> {
+            acceptButton.setDisable(!scoringPhase);
+            continueButton.setDisable(!scoringPhase);
+            redraw();
+        });
     }
-
-    Platform.runLater(() -> {
-        acceptButton.setDisable(!scoringPhase);
-        continueButton.setDisable(!scoringPhase);
-        redraw();
-    });
-}
-
-
 }

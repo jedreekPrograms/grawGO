@@ -13,22 +13,35 @@ import java.io.*;
 import java.net.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * Główna klasa serwera odpowiedzialna za przyjmowanie nowych połączeń
+ * oraz kojarzenie graczy w pary (matchmaking).
+ * Serwer nasłuchuje na określonym porcie i po zebraniu dwóch osób tworzy nową sesję gry.
+ */
 public class MatchmakingServer {
 
+    /** Port, na którym serwer akceptuje połączenia przychodzące. */
     private static final int PORT = 5000;
 
-    // Kolejka oczekujących graczy
+    /** Bezpieczna wątkowo kolejka przechowująca graczy oczekujących na przeciwnika. */
     private static final LinkedBlockingQueue<ClientConnection> waitingPlayers = new LinkedBlockingQueue<>();
 
+    /**
+     * Punkt wejścia serwera. Uruchamia gniazdo serwerowe i w nieskończonej pętli
+     * akceptuje nowych klientów, przypisując każdego do osobnego wątku obsługi.
+     *
+     * @param args parametry linii komend (nieużywane).
+     */
     public static void main(String[] args) {
         System.out.println("Serwer matchmakingu uruchomiony na porcie " + PORT);
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
 
             while (true) {
+                // Oczekiwanie na połączenie nowego klienta
                 Socket socket = serverSocket.accept();
-                //System.out.println("Nowy klient połączony: " + socket);
-
+                
+                // Utworzenie handlera dla klienta i uruchomienie go w osobnym wątku
                 ClientHandler handler = new ClientHandler(socket);
                 handler.setMessageListener(msg -> System.out.println("Odebrano od " + handler.getSocket() + ": " + msg));
                 Thread t = new Thread(handler);
@@ -43,7 +56,13 @@ public class MatchmakingServer {
         }
     }
 
-    // Próba sparowania graczy
+    /**
+     * Próbuje sparować nowo połączonego gracza z kimś z kolejki oczekujących.
+     * Metoda jest synchronizowana, aby zapobiec problemom przy jednoczesnym łączeniu wielu graczy.
+     * Jeśli para zostanie znaleziona, inicjalizuje rejestr komend i tworzy sesję gry.
+     *
+     * @param newPlayer połączenie nowego gracza.
+     */
     private static synchronized void matchmaking(ClientConnection newPlayer) {
         try {
             // jeśli już jest ktoś w kolejce – parujemy
@@ -58,6 +77,7 @@ public class MatchmakingServer {
                     }
                     return;
                 }
+                // Konfiguracja rejestru komend dostępnych w tej sesji gry
                 CommandRegistry registry = new CommandRegistry();
                 registry.register("MOVE", new pl.edu.go.server.commandInterfaces.MoveCommand());
                 registry.register("PASS", new pl.edu.go.server.commandInterfaces.PassCommand());

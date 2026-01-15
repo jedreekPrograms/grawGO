@@ -3,11 +3,9 @@ package pl.edu.go.model;
 import org.junit.Before;
 import org.junit.Test;
 
+
 import static org.junit.Assert.*;
 
-/**
- * Testy jednostkowe klasy MoveFactory.
- */
 public class MoveFactoryTest {
 
     private MoveAbstractFactory factory;
@@ -17,56 +15,42 @@ public class MoveFactoryTest {
         factory = new MoveFactory();
     }
 
-    // =========================
-    // PLACE
-    // =========================
-
     @Test
-    public void createPlace_createsPlaceMoveWithCorrectFields() {
-        Point p = new Point(4, 7);
-
+    public void createPlace_createsPlaceMove() {
+        Point p = new Point(2, 3);
         Move move = factory.createPlace(p, Color.BLACK);
 
         assertNotNull(move);
         assertEquals(Move.Type.PLACE, move.getType());
-        assertEquals(p, move.getPos());
         assertEquals(Color.BLACK, move.getColor());
+        assertEquals(p, move.getPos());
     }
 
-    // =========================
-    // PASS
-    // =========================
-
     @Test
-    public void createPass_createsPassMoveWithNullPosition() {
+    public void createPass_createsPassMove() {
         Move move = factory.createPass(Color.WHITE);
 
         assertNotNull(move);
         assertEquals(Move.Type.PASS, move.getType());
-        assertNull(move.getPos());
         assertEquals(Color.WHITE, move.getColor());
+        assertNull(move.getPos());
     }
 
-    // =========================
-    // RESIGN
-    // =========================
-
     @Test
-    public void createResign_createsResignMoveWithNullPosition() {
+    public void createResign_createsResignMove() {
         Move move = factory.createResign(Color.BLACK);
 
         assertNotNull(move);
         assertEquals(Move.Type.RESIGN, move.getType());
-        assertNull(move.getPos());
         assertEquals(Color.BLACK, move.getColor());
+        assertNull(move.getPos());
     }
 
-    // =========================
-    // POLYMORPHISM
-    // =========================
-
     @Test
-    public void factory_isInstanceOfMoveAbstractFactory() {
-        assertTrue(factory instanceof MoveAbstractFactory);
+    public void factoryCreatesNewMoveEachTime() {
+        Move m1 = factory.createPass(Color.BLACK);
+        Move m2 = factory.createPass(Color.BLACK);
+
+        assertNotSame(m1, m2);
     }
 }

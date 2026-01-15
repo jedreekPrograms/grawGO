@@ -4,47 +4,52 @@ import pl.edu.go.model.Color;
 import pl.edu.go.model.GameState;
 import pl.edu.go.model.Move;
 import pl.edu.go.model.MoveFactory;
-import pl.edu.go.model.Move.Type;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 /**
- * Komenda rezygnacji (pass) w grze Go.
- * Gracz rezygnuje z wykonania ruchu w danej turze.
+ * Implementacja komendy spasowania tury (pass) w grze Go.
+ * Odpowiada za proces rezygnacji gracza z wykonania ruchu w bieżącej turze
+ * oraz sprawdza, czy nastąpiła sekwencja dwóch pasów kończąca aktywną rozgrywkę.
  */
 public class PassCommand implements GameCommand {
-
+    /** Fabryka służąca do tworzenia obiektów ruchu typu PASS. */
     private final MoveFactory moveFactory = new MoveFactory();
-
+    /**
+     * Wykonuje logikę spasowania tury przez gracza.
+     * Sprawdza, czy gracz ma prawo do ruchu, aplikuje pasowanie w modelu gry
+     * i aktualizuje status sesji. Jeśli obaj gracze spasowali pod rząd,
+     * gra przechodzi w fazę oznaczania martwych kamieni.
+     *
+     * @param args Tablica argumentów komendy (zazwyczaj pusta).
+     * @param session Aktualna sesja gry.
+     * @param sender Połączenie klienta wysyłającego komendę PASS.
+     * @return true, jeśli komenda została pomyślnie przetworzona; 
+     * false, jeśli gracz próbował spasować nie w swojej turze lub wystąpił błąd logiki.
+     */
     @Override
     public boolean execute(String[] args, GameSession session, ClientConnection sender) {
         GameState game = session.getGame();
         Color color = session.getPlayerColor(sender);
-        
-        // Upewnij się, że to tura tego gracza (zabezpieczenie)
+        // Weryfikacja, czy gracz wykonuje akcję w swojej turze
         if (game.getNextToMove() != color) {
             return false;
         }
-
+        // Tworzenie i aplikowanie ruchu typu PASS w modelu gry
         Move move = moveFactory.createPass(color);
-
-        // 1. Najpierw aplikujemy ruch w modelu
-        // GameState ustawi status STOPPED jeśli to drugi pas, ale NIE zmieni nextToMove
         boolean success = game.applyMove(move);
         
         if (!success) {
             return false; 
         }
-
-        // 2. Wysyłamy info o pasie
+        // Poinformowanie obu graczy o spasowaniu tury przez jednego z nich
         session.sendToBoth("PASS " + color);
-
-        // 3. Sprawdzamy, jaki jest status gry PO wykonaniu ruchu
+        // Sprawdzenie, czy model gry zmienił status na STOPPED (po dwóch pasach z rzędu)
         if (game.getStatus() == GameState.Status.STOPPED) {
-            // Jeśli gra weszła w stan oznaczania kamieni -> wysyłamy STOPPED
+            // Rozpoczęcie fazy oznaczania martwych kamieni i obliczania punktów
             session.sendToBoth("STOPPED");
-            // Nie zmieniamy nextToMove, bo gra jest zatrzymana
+
         } else {
-            // 4. Jeśli gra nadal trwa (Status.PLAYING), to Komenda zmienia turę
+            // Normalna zmiana tury, jeśli to dopiero pierwszy pas w sekwencji
             if (color == Color.BLACK) {
                 game.setNextToMove(Color.WHITE);
             } else {
