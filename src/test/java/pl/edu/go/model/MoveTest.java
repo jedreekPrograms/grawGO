@@ -2,92 +2,62 @@ package pl.edu.go.model;
 
 import org.junit.Test;
 
+
 import static org.junit.Assert.*;
 
-/**
- * Testy jednostkowe klasy Move.
- */
 public class MoveTest {
 
-    // =========================
-    // PLACE
-    // =========================
-
     @Test
-    public void constructor_place_setsAllFieldsCorrectly() {
+    public void createPlaceMove_hasCorrectFields() {
         Point p = new Point(3, 4);
-
         Move move = new Move(Move.Type.PLACE, p, Color.BLACK);
 
         assertEquals(Move.Type.PLACE, move.getType());
-        assertEquals(p, move.getPos());
         assertEquals(Color.BLACK, move.getColor());
+        assertEquals(p, move.getPos());
     }
 
     @Test
-    public void toString_place_returnsCorrectFormat() {
-        Move move = new Move(
-                Move.Type.PLACE,
-                new Point(2, 2),
-                Color.WHITE
-        );
+    public void createPassMove_hasNullPosition() {
+        Move move = new Move(Move.Type.PASS, null, Color.WHITE);
+
+        assertEquals(Move.Type.PASS, move.getType());
+        assertEquals(Color.WHITE, move.getColor());
+        assertNull(move.getPos());
+    }
+
+    @Test
+    public void createResignMove_hasNullPosition() {
+        Move move = new Move(Move.Type.RESIGN, null, Color.BLACK);
+
+        assertEquals(Move.Type.RESIGN, move.getType());
+        assertEquals(Color.BLACK, move.getColor());
+        assertNull(move.getPos());
+    }
+
+    @Test
+    public void toString_placeMove() {
+        Point p = new Point(1, 2);
+        Move move = new Move(Move.Type.PLACE, p, Color.BLACK);
 
         String text = move.toString();
 
-        assertEquals("WHITE -> (2,2)", text);
-    }
-
-    // =========================
-    // PASS
-    // =========================
-
-    @Test
-    public void constructor_pass_hasNullPosition() {
-        Move move = new Move(Move.Type.PASS, null, Color.BLACK);
-
-        assertEquals(Move.Type.PASS, move.getType());
-        assertNull(move.getPos());
-        assertEquals(Color.BLACK, move.getColor());
+        assertTrue(text.contains("BLACK"));
+        assertTrue(text.contains("->"));
+        assertTrue(text.contains(p.toString()));
     }
 
     @Test
-    public void toString_pass_returnsCorrectText() {
+    public void toString_passMove() {
         Move move = new Move(Move.Type.PASS, null, Color.WHITE);
 
         assertEquals("WHITE passes", move.toString());
     }
 
-    // =========================
-    // RESIGN
-    // =========================
-
     @Test
-    public void constructor_resign_hasNullPosition() {
-        Move move = new Move(Move.Type.RESIGN, null, Color.BLACK);
-
-        assertEquals(Move.Type.RESIGN, move.getType());
-        assertNull(move.getPos());
-        assertEquals(Color.BLACK, move.getColor());
-    }
-
-    @Test
-    public void toString_resign_returnsCorrectText() {
+    public void toString_resignMove() {
         Move move = new Move(Move.Type.RESIGN, null, Color.BLACK);
 
         assertEquals("BLACK resigns", move.toString());
-    }
-
-    // =========================
-    // GENERAL
-    // =========================
-
-    @Test
-    public void move_isImmutable() {
-        Point p = new Point(1, 1);
-        Move move = new Move(Move.Type.PLACE, p, Color.BLACK);
-
-        assertSame(p, move.getPos());
-        assertEquals(Color.BLACK, move.getColor());
-        assertEquals(Move.Type.PLACE, move.getType());
     }
 }

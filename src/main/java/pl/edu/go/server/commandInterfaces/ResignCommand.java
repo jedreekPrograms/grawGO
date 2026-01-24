@@ -11,23 +11,35 @@ import pl.edu.go.server.persistence.entity.MoveType;
 import pl.edu.go.server.persistence.service.GamePersistenceService;
 
 /**
- * Komenda poddania się (resign) w grze Go.
- * Gracz rezygnuje, przeciwnik zostaje zwycięzcą.
+ * Implementacja komendy rezygnacji (poddania się) w grze Go.
+ * Wywołanie tej komendy przez któregokolwiek z graczy skutkuje natychmiastowym
+ * przerwaniem rozgrywki i ogłoszeniem przeciwnika zwycięzcą.
  */
 public class ResignCommand implements GameCommand {
-
+    /** Fabryka służąca do tworzenia obiektów ruchu typu RESIGN. */
     private final MoveFactory moveFactory = new MoveFactory();
-
+    /**
+     * Wykonuje logikę poddania się gracza.
+     * Identyfikuje gracza, który wysłał komendę, wyznacza zwycięzcę (przeciwnika),
+     * aktualizuje stan logiczny gry w modelu i rozsyła komunikat o zakończeniu partii.
+     *
+     * @param args Tablica argumentów komendy (zazwyczaj pusta).
+     * @param session Aktualna sesja gry, w której uczestniczy gracz.
+     * @param sender Połączenie klienta (nadawcy), który zdecydował się poddać partię.
+     * @return true, ponieważ komenda rezygnacji jest zawsze procesowana pomyślnie.
+     */
     @Override
     public boolean execute(String[] args, GameSession session, ClientConnection sender) {
-
+        // Pobranie koloru gracza, który się poddaje
         Color loser = session.getPlayerColor(sender);
+        // Wyznaczenie zwycięzcy (automatycznie przeciwnik osoby poddającej się)
         Color winner = loser.opponent();
-
+        // Utworzenie obiektu ruchu typu RESIGN i zaaplikowanie go do modelu gry
+        // Powoduje to ustawienie statusu gry na FINISHED w GameState
         Move move = moveFactory.createResign(loser);
         session.getGame().applyMove(move);
 
-
+        // Poinformowanie obu graczy o rezygnacji i ogłoszenie koloru zwycięzcy
         session.sendToBoth("RESIGN " + winner);
         GamePersistenceService ps = PersistenceApplication.getBean(GamePersistenceService.class);
         ps.saveMove(
@@ -44,8 +56,6 @@ public class ResignCommand implements GameCommand {
                 winner.toString()
         );
 
-        // Zakończenie sesji
-        //session.endSession();
         return true;
     }
 }

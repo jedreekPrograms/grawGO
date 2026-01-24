@@ -4,33 +4,27 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-/**
- * Testy jednostkowe klasy BoardBuilder.
- */
 public class BoardBuilderTest {
 
     @Test
-    public void build_withoutSize_usesDefaultSize() {
-        BoardBuilder builder = new BoardBuilder();
-
-        Board board = builder.build();
+    public void build_defaultSize_is19() {
+        Board board = new BoardBuilder().build();
 
         assertNotNull(board);
         assertEquals(19, board.getSize());
     }
 
     @Test
-    public void build_withCustomSize_createsBoardWithGivenSize() {
-        BoardBuilder builder = new BoardBuilder();
+    public void build_customSize_isApplied() {
+        Board board = new BoardBuilder()
+                .size(9)
+                .build();
 
-        Board board = builder.size(9).build();
-
-        assertNotNull(board);
         assertEquals(9, board.getSize());
     }
 
     @Test
-    public void size_returnsSameBuilder_forChaining() {
+    public void size_method_isFluent() {
         BoardBuilder builder = new BoardBuilder();
 
         BoardBuilder returned = builder.size(13);
@@ -40,21 +34,22 @@ public class BoardBuilderTest {
 
     @Test
     public void multipleSizeCalls_lastOneWins() {
-        BoardBuilder builder = new BoardBuilder();
+        Board board = new BoardBuilder()
+                .size(9)
+                .size(13)
+                .build();
 
-        Board board = builder.size(9).size(5).build();
-
-        assertEquals(5, board.getSize());
+        assertEquals(13, board.getSize());
     }
 
     @Test
     public void build_createsNewBoardInstanceEachTime() {
-        BoardBuilder builder = new BoardBuilder().size(9);
+        BoardBuilder builder = new BoardBuilder();
 
-        Board board1 = builder.build();
-        Board board2 = builder.build();
+        Board b1 = builder.size(9).build();
+        Board b2 = builder.size(9).build();
 
-        assertNotSame(board1, board2);
-        assertEquals(board1.getSize(), board2.getSize());
+        assertNotSame(b1, b2);
+        assertEquals(b1.getSize(), b2.getSize());
     }
 }

@@ -1,14 +1,14 @@
 package pl.edu.go.server.commandInterfaces;
 
-import org.junit.Before;
-import org.junit.Test;
-import pl.edu.go.model.Color;
-import pl.edu.go.model.GameState;
+import org.junit.*;
+import static org.mockito.Mockito.*;
+import static org.junit.Assert.*;
+
+import pl.edu.go.server.commandInterfaces.AcceptCommand;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import pl.edu.go.model.*;
+import pl.edu.go.model.TerritoryCalculator.GameResult;
 
 public class AcceptCommandTest {
 
@@ -29,7 +29,7 @@ public class AcceptCommandTest {
     }
 
     @Test
-    public void execute_failsIfGameNotStopped() {
+    public void shouldRejectWhenGameNotStopped() {
         when(game.getStatus()).thenReturn(GameState.Status.PLAYING);
 
         boolean result = command.execute(new String[]{}, session, sender);
@@ -39,7 +39,7 @@ public class AcceptCommandTest {
     }
 
     @Test
-    public void execute_firstAccept_sendsPlayerAccepted() {
+    public void shouldAcceptFirstPlayerOnly() {
         when(game.getStatus()).thenReturn(GameState.Status.STOPPED);
         when(game.accept(Color.BLACK)).thenReturn(false);
 
@@ -47,8 +47,27 @@ public class AcceptCommandTest {
 
         assertTrue(result);
         verify(session).sendToBoth("PLAYER_ACCEPTED BLACK");
-        verify(session, never()).endSession();
+        verify(game, never()).confirmEndGame();
     }
 
+
+   @Test
+public void shouldEndGameWhenBothAccepted() {
+    when(game.getStatus()).thenReturn(GameState.Status.STOPPED);
+    when(game.accept(Color.BLACK)).thenReturn(true);
+
+    GameResult resultMock = mock(GameResult.class);
+    when(resultMock.blackScore()).thenReturn(10.0);
+    when(resultMock.whiteScore()).thenReturn(8.5);
+    when(resultMock.winner()).thenReturn("BLACK");   // ✅ POPRAWKA
+    when(game.getFinalResult()).thenReturn(resultMock);
+
+    boolean result = command.execute(new String[]{}, session, sender);
+
+    assertTrue(result);
+    verify(game).confirmEndGame();
+    verify(session).sendToBoth("GAME_END 10.0 8.5 BLACK");
+    verify(session).endSession();
+}
 
 }

@@ -11,13 +11,17 @@ import java.util.Set;
  * liczbę zbitych kamieni oraz zakończenie gry.
  */
 public class GameState {
-
+    /**
+     * Reprezentuje możliwe stany, w jakich może znajdować się gra.
+     */
     public enum Status {
         PLAYING,    // Gra trwa
         STOPPED,    // Gra zatrzymana (dwa pasy), czas na oznaczanie martwych kamieni
         FINISHED    // Gra zakończona (rezygnacja lub podliczenie punktów)
     }
+    /** Zbiór punktów na planszy oznaczonych jako martwe w fazie STOPPED. */
     private Set<Point> markedDead = new HashSet<>();
+    /** Zbiór kolorów graczy, którzy zaakceptowali aktualny stan martwych kamieni. */
     private final Set<Color> acceptedPlayers = new HashSet<>();
     /** Aktualna plansza gry. */
     private Board board;
@@ -98,27 +102,27 @@ public class GameState {
         if (move.getColor() != nextToMove && status == Status.PLAYING) return false;
 
         if (move.getType() == Move.Type.RESIGN) {
-        status = Status.FINISHED;
-        // W przypadku rezygnacji zwycięzcą jest przeciwnik
-        String winner = move.getColor() == Color.BLACK ? "WHITE" : "BLACK";
-        this.finalResult = new TerritoryCalculator.GameResult(0, 0, 6.5, winner);
-        return true;
+            status = Status.FINISHED;
+            // W przypadku rezygnacji zwycięzcą jest przeciwnik
+            String winner = move.getColor() == Color.BLACK ? "WHITE" : "BLACK";
+            this.finalResult = new TerritoryCalculator.GameResult(0, 0, 6.5, winner);
+            return true;
         }
 
         if (move.getType() == Move.Type.PASS) {
-    if (lastMoveType == Move.Type.PASS) {
-        // Drugi pas -> faza oznaczania martwych kamieni
-        System.out.println("Entering scoring");
-        this.status = Status.STOPPED;
-        lastMoveType = null; // resetujemy, żeby DEAD / ACCEPT / CONTINUE działały
-        // **Nie obliczamy wyniku od razu!**
-        return true;
-    } else {
-        lastMoveType = Move.Type.PASS;
-        //switchTurn(Move.Type.PASS);
-        return true;
-    }
-}
+            if (lastMoveType == Move.Type.PASS) {
+                // Drugi pas -> faza oznaczania martwych kamieni
+                System.out.println("Entering scoring");
+                this.status = Status.STOPPED;
+                lastMoveType = null; // resetujemy, żeby DEAD / ACCEPT / CONTINUE działały
+                // **Nie obliczamy wyniku od razu!**
+                return true;
+            } else {
+                lastMoveType = Move.Type.PASS;
+                //switchTurn(Move.Type.PASS);
+                return true;
+            }
+        }
 
 
         if (move.getType() == Move.Type.PLACE) {
@@ -146,151 +150,112 @@ public class GameState {
             }
 
             previousBoardStates.add(newHash);
-            //switchTurn(Move.Type.PLACE);
             lastMoveType = Move.Type.PLACE;
             return true;
         }
         return false;
-        /*switch (move.getType()) {
-            case PLACE:
-                if (move.getColor() != nextToMove) {
-                    return false;
-                }
-
-                int captured = board.placeStone(
-                        move.getColor(),
-                        move.getPos().x,
-                        move.getPos().y
-                );
-
-                if (captured < 0) return false;
-
-                if (move.getColor() == Color.BLACK) {
-                    blackCaptures += captured;
-                } else {
-                    whiteCaptures += captured;
-                }
-
-                historyHashes.add(board.computeHash());
-                nextToMove = nextToMove.opponent();
-                return true;
-
-            case PASS:
-                if (move.getColor() != nextToMove) return false;
-                nextToMove = nextToMove.opponent();
-                return true;
-
-            case RESIGN:
-                gameOver = true;
-                return true;
-
-            default:
-                return false;
-        }*/
-
-
-
-
     }
+    /**
+     * Uruchamia kalkulator terytorium i ustawia ostateczny wynik gry.
+     */
     private void calculateAndSetScore() {
-    TerritoryCalculator calculator = new TerritoryCalculator();
-    // Przekazujemy pusty zbiór martwych kamieni (uproszczenie dla wersji konsolowej)
-    // oraz komi 6.5
-    this.finalResult = calculator.calculateScore(this, new HashSet<>(), 6.5);
-    // Wypisanie wyniku w konsoli serwera
-    System.out.println("\n--- MECZ ZAKOŃCZONY: PODLICZANIE PUNKTÓW ---");
-    System.out.println("Gracz CZARNY:");
-    System.out.println("  - Zbicia: " + blackCaptures);
-    // Tutaj zakładamy, że wynik terytorialny to wynik końcowy minus zbicia
-    System.out.println("  - Terytorium: " + (finalResult.blackScore() - blackCaptures));
-    System.out.println("  - SUMA: " + finalResult.blackScore());
-    
-    System.out.println("Gracz BIAŁY:");
-    System.out.println("  - Zbicia: " + whiteCaptures);
-    System.out.println("  - Terytorium: " + (finalResult.whiteScore() - whiteCaptures));
-    System.out.println("  - SUMA: " + finalResult.whiteScore());
-    
-    System.out.println("ZWYCIĘZCA: " + finalResult.winner());
-    System.out.println("-------------------------------------------\n");
-}
-public TerritoryCalculator.GameResult getFinalResult() {
-    return finalResult;
-}
-    /*private void switchTurn(Move.Type type) {
-        this.lastMoveType = type;
-        this.nextToMove = nextToMove.opponent();
-    }*/
+        TerritoryCalculator calculator = new TerritoryCalculator();
+        this.finalResult = calculator.calculateScore(this, new HashSet<>(), 6.5);
+    }
+    /** @return Wynik gry po jej zakończeniu. */
+    public TerritoryCalculator.GameResult getFinalResult() {
+        return finalResult;
+    }
+    /**
+     * Wznawia grę z fazy STOPPED do PLAYING, czyszcząc oznaczenia martwych kamieni.
+     */   
     public void resumeGame() {
         if (status == Status.STOPPED) {
             markedDead.clear();
             status = Status.PLAYING;
             
-            lastMoveType = null; // Reset licznika pasów
-            // nextToMove pozostaje bez zmian (czyli ten, kto miałby ruch po dwóch pasach)
-            // lub można wymusić logikę z zasady 8 ("przeciwnik nie może odmówić i gra jako pierwszy").
-            // W obecnym modelu nextToMove wskazuje na osobę, która miałaby ruch po pasie,
-            // co spełnia ten warunek naturalnie.
+            lastMoveType = null;
+
         }
     }
+    /** @return true, jeśli gra została definitywnie zakończona. */
     public boolean isGameOver() {
-    return status == Status.FINISHED;
+        return status == Status.FINISHED;
     }
-    
-public boolean toggleDeadStone(Point p) {
-    if (status != Status.STOPPED) return false;
+    /**
+     * Przełącza status grupy kamieni (żywa/martwa) na danej pozycji w fazie punktacji.
+     * Oznaczenie martwej grupy powoduje automatyczne zaznaczenie wszystkich połączonych kamieni tego samego koloru.
+     *
+     * @param p Punkt na planszy wskazujący grupę.
+     * @return true, jeśli operacja się powiodła (gra jest w fazie STOPPED).
+     */
+    public boolean toggleDeadStone(Point p) {
+        if (status != Status.STOPPED) return false;
 
-    Color c = board.get(p.x, p.y);
-    if (c == null || c == Color.EMPTY) return false;
-
-    Set<Point> group = board.getGroup(p.x, p.y);
-
-    if (markedDead.contains(p)) {
-        markedDead.removeAll(group);
-    } else {
-        markedDead.addAll(group);
-    }
-
-    acceptedPlayers.clear(); // zmiana -> trzeba ponownie zaakceptować
-    return true;
-}
-
-    public void requestResume() {
-    if (status == Status.STOPPED) {
-        resumeGame();
-    }
-}
-public void confirmEndGame() {
-    if (status != Status.STOPPED) return;
-
-    // 1. Usuń martwe kamienie z planszy
-    for (Point p : markedDead) {
         Color c = board.get(p.x, p.y);
-        if (c == Color.BLACK) whiteCaptures++;
-        if (c == Color.WHITE) blackCaptures++;
+        if (c == null || c == Color.EMPTY) return false;
+
+        Set<Point> group = board.getGroup(p.x, p.y);
+
+        if (markedDead.contains(p)) {
+            markedDead.removeAll(group);
+        } else {
+            markedDead.addAll(group);
+        }
+        // Każda zmiana oznaczeń resetuje akceptację graczy
+        acceptedPlayers.clear();
+        return true;
     }
-    board.removeGroup(markedDead);
+    /** Żąda wznowienia gry (wyjścia z fazy punktacji). */
+    public void requestResume() {
+        if (status == Status.STOPPED) {
+            resumeGame();
+        }
+    }
+    /**
+     * Definitywnie kończy grę. 
+     * Usuwa z planszy grupy oznaczone jako martwe, dolicza je do punktów graczy i oblicza wynik terytorialny.
+     */
+    public void confirmEndGame() {
+        if (status != Status.STOPPED) return;
 
-    // 2. Oblicz wynik
-    calculateAndSetScore();
+        for (Point p : markedDead) {
+            Color c = board.get(p.x, p.y);
+            if (c == Color.BLACK) whiteCaptures++;
+            if (c == Color.WHITE) blackCaptures++;
+        }
+        board.removeGroup(markedDead);
 
-    status = Status.FINISHED;
-}
-public Set<Point> getMarkedDead() {
-    return new HashSet<>(markedDead);
-}
-public boolean accept(Color player) {
-    if (status != Status.STOPPED) return false;
+        calculateAndSetScore();
 
-    acceptedPlayers.add(player);
-    return acceptedPlayers.size() == 2;
-}
-public void setStatus(Status s){
-    this.status = s;
-}
-public void setNextToMove(Color n){
-    this.nextToMove = n;
-}
-public Move.Type getLastMoveType(){
-    return lastMoveType;
-}
+        status = Status.FINISHED;
+    }
+    /** @return Kopia zbioru punktów oznaczonych jako martwe. */
+    public Set<Point> getMarkedDead() {
+        return new HashSet<>(markedDead);
+    }
+    /**
+     * Rejestruje akceptację stanu planszy przez danego gracza.
+     *
+     * @param player Kolor gracza akceptującego.
+     * @return true, jeśli obaj gracze zaakceptowali stan (oznacza to koniec gry).
+     */
+    public boolean accept(Color player) {
+        if (status != Status.STOPPED) return false;
+
+        acceptedPlayers.add(player);
+        return acceptedPlayers.size() == 2;
+    }
+    /** @param s Nowy status gry. */
+    public void setStatus(Status s){
+        this.status = s;
+    }
+    /** @param n Kolor gracza, który ma teraz wykonać ruch. */
+    public void setNextToMove(Color n){
+        this.nextToMove = n;
+    }
+    /** @return Typ ostatnio wykonanego ruchu. */
+    public Move.Type getLastMoveType(){
+        return lastMoveType;
+    }
 }

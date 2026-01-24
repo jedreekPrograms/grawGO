@@ -134,14 +134,26 @@
                     <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
-
             <plugin>
-    <groupId>org.openjfx</groupId>
-    <artifactId>javafx-maven-plugin</artifactId>
-    <version>0.0.8</version>
-    <configuration>
-        <mainClass>pl.edu.go.client.GoBoardDemo</mainClass> </configuration>
-</plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.6.3</version> 
+            <configuration>
+                <show>private</show> 
+                <nohelp>true</nohelp>
+                <additionalOptions>
+                <additionalOption>-Xdoclint:none</additionalOption>
+                </additionalOptions>
+                <failOnError>false</failOnError>
+            </configuration>
+            </plugin>
+            <plugin>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-maven-plugin</artifactId>
+            <version>0.0.8</version>
+            <configuration>
+                <mainClass>pl.edu.go.client.GoBoardDemo</mainClass> </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>

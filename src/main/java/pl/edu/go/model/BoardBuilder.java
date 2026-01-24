@@ -6,7 +6,7 @@ package pl.edu.go.model;
 public class BoardBuilder {
 
     /** Domyślny rozmiar planszy. */
-    private int size = 19;
+    private int size = 9;
 
     /**
      * Ustawia rozmiar planszy.
