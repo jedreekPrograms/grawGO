@@ -1,13 +1,13 @@
 package pl.edu.go.server;
 
-import pl.edu.go.server.commandInterfaces.AcceptCommand;
-import pl.edu.go.server.commandInterfaces.CommandRegistry;
-import pl.edu.go.server.commandInterfaces.ContinueCommand;
-import pl.edu.go.server.commandInterfaces.DeadCommand;
+import pl.edu.go.server.commandInterfaces.*;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 import pl.edu.go.server.networkInterfaces.MessageListener;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 import pl.edu.go.model.Color;
+import pl.edu.go.server.persistence.PersistenceApplication;
+import pl.edu.go.server.persistence.entity.GameEntity;
+import pl.edu.go.server.persistence.service.GamePersistenceService;
 
 import java.io.*;
 import java.net.*;
@@ -21,6 +21,7 @@ public class MatchmakingServer {
     private static final LinkedBlockingQueue<ClientConnection> waitingPlayers = new LinkedBlockingQueue<>();
 
     public static void main(String[] args) {
+        PersistenceApplication.start();
         System.out.println("Serwer matchmakingu uruchomiony na porcie " + PORT);
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
@@ -66,9 +67,16 @@ public class MatchmakingServer {
                 registry.register("DEAD", new DeadCommand());
                 registry.register("CONTINUE", new ContinueCommand());
                 registry.register("ACCEPT", new AcceptCommand());
+                registry.register("PLAYSTORE", new PlayStoreCommand());
+
+                GamePersistenceService ps = PersistenceApplication.getBean(GamePersistenceService.class);
+
+                GameEntity gameEntity = ps.startGame(9);
 
                 //tu rozmiar dodalem
                 GameSession session = new GameSession(player1, player2, 9, registry);
+
+                session.setGameEntity(gameEntity);
 
                 player1.setGameSession(session, Color.WHITE);
                 player2.setGameSession(session, Color.BLACK);

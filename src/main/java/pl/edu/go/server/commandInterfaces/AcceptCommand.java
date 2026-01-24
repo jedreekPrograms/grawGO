@@ -5,9 +5,12 @@ import pl.edu.go.model.GameState;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.commandInterfaces.GameCommand;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
+import pl.edu.go.server.persistence.PersistenceApplication;
+import pl.edu.go.server.persistence.entity.MoveType;
+import pl.edu.go.server.persistence.service.GamePersistenceService;
 
 public class AcceptCommand implements GameCommand {
-
+    Color winner;
     @Override
     public boolean execute(String[] args, GameSession session, ClientConnection sender) {
 
@@ -35,8 +38,28 @@ public class AcceptCommand implements GameCommand {
                     result.whiteScore() + " " +
                     result.winner()
             );
+            if (result.blackScore() > result.whiteScore()) {
+                winner = Color.BLACK;
+            } else {
+                winner = Color.WHITE;
+            }
+            GamePersistenceService ps = PersistenceApplication.getBean(GamePersistenceService.class);
 
-            session.endSession();
+//            ps.saveMove(
+//                    session.getGameEntity(),
+//                    session.nextMoveNumber(),
+//                    null,
+//                    null,
+//                    playerColor,
+//                    MoveType.ACCEPT
+//            );
+
+            ps.finishGame(
+                    session.getGameEntity(),
+                    winner.toString()
+            );
+
+            //session.endSession();
         } else {
             // Jeśli to dopiero pierwsza akceptacja, poinformuj o tym
             session.sendToBoth("PLAYER_ACCEPTED " + playerColor);

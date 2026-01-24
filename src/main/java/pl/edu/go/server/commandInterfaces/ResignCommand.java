@@ -5,6 +5,10 @@ import pl.edu.go.model.Move;
 import pl.edu.go.model.MoveFactory;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
+import pl.edu.go.server.persistence.PersistenceApplication;
+import pl.edu.go.server.persistence.entity.GameEntity;
+import pl.edu.go.server.persistence.entity.MoveType;
+import pl.edu.go.server.persistence.service.GamePersistenceService;
 
 /**
  * Komenda poddania się (resign) w grze Go.
@@ -25,6 +29,20 @@ public class ResignCommand implements GameCommand {
 
 
         session.sendToBoth("RESIGN " + winner);
+        GamePersistenceService ps = PersistenceApplication.getBean(GamePersistenceService.class);
+        ps.saveMove(
+                session.getGameEntity(),
+                session.nextMoveNumber(),
+                null,
+                null,
+                loser,
+                MoveType.RESIGN
+        );
+
+        ps.finishGame(
+                session.getGameEntity(),
+                winner.toString()
+        );
 
         // Zakończenie sesji
         //session.endSession();

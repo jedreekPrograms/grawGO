@@ -8,6 +8,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -28,6 +29,8 @@ public class GoBoardDemo extends Application {
 
     Button acceptButton;
     Button continueButton;
+    Button playGameStoryButton;
+
 
     private final Color[][] board = new Color[BOARD_SIZE][BOARD_SIZE];
 
@@ -48,6 +51,10 @@ public class GoBoardDemo extends Application {
     Label passLabel;
     private boolean winner;
 
+    TextField replayId;
+    private boolean replayMode = false;
+    private String replayWinner;
+
     @Override
     public void start(Stage stage) throws IOException {
 
@@ -64,6 +71,13 @@ public class GoBoardDemo extends Application {
 
         Button resignButton = new Button("RESIGN");
         resignButton.getStyleClass().add("resign-button");
+
+        //iteracja 3!!!!!!!!
+        playGameStoryButton = new Button("PlayGameStory");
+        playGameStoryButton.setDisable(true);
+
+        replayId = new TextField("Podaj id gry");
+        replayId.setDisable(true);
 
         acceptButton = new Button("ACCEPT");
         acceptButton.getStyleClass().add("accept-button");
@@ -94,7 +108,7 @@ public class GoBoardDemo extends Application {
         capturedBox.getStyleClass().addAll("card", "side-panel");
 
         VBox statusBox = new VBox(6, turnLabel, colorLabel);
-        HBox actionsBox = new HBox(10, passButton, resignButton, acceptButton, continueButton);
+        HBox actionsBox = new HBox(10, passButton, resignButton, acceptButton, continueButton, playGameStoryButton, replayId);
 
 
         HBox infoBox = new HBox(20, statusBox, actionsBox, passLabel);
@@ -105,12 +119,16 @@ public class GoBoardDemo extends Application {
         resignButton.setOnAction(e -> client.sendResign());
         acceptButton.setOnAction(e -> client.sendAccept());
         continueButton.setOnAction(e -> client.sendContinue());
+        playGameStoryButton.setOnAction(e ->client.sendPlayStore(Integer.parseInt(replayId.getText())));
+
 
 
 
         canvas.setOnMouseClicked(e -> {
+            if (replayMode) return;
 
-    int x = (int) ((e.getX() - MARGIN + CELL / 2) / CELL);
+
+            int x = (int) ((e.getX() - MARGIN + CELL / 2) / CELL);
     int y = (int) ((e.getY() - MARGIN + CELL / 2) / CELL);
 
     if (x < 0 || y < 0 || x >= BOARD_SIZE || y >= BOARD_SIZE) return;
@@ -157,6 +175,58 @@ public class GoBoardDemo extends Application {
     /* ===================== SERVER ===================== */
 
     public void handleServerMessage(String msg) {
+
+
+        if (msg.startsWith("REPLAY_START")) {
+            Platform.runLater(() -> {
+                colorLabel.setText("REPLAY");
+                turnLabel.setText("REPLAY MODE");
+
+                myCapturedLabel.setText("");
+                opponentCapturedLabel.setText("");
+
+                myCapturedLabel.setVisible(false);
+                opponentCapturedLabel.setVisible(false);
+
+                passLabel.setVisible(false);
+                passLabel.setText("");
+            });
+
+            replayMode = true;
+            scoringPhase = false;
+            myTurn = false;
+
+            clearBoard();
+            redraw();
+            return;
+        }
+
+
+
+//        if (msg.startsWith("REPLAY_WINNER")) {
+//            replayWinner = msg.split(" ")[1];
+//
+//            Platform.runLater(() -> {
+//                passLabel.setVisible(true);
+//                passLabel.getStyleClass().removeAll("win", "lose");
+//                passLabel.setText("WINNER: " + replayWinner);
+//                passLabel.getStyleClass().add("win");
+//            });
+//            return;
+//        }
+
+
+        if (msg.startsWith("REPLAY_END")) {
+            replayMode = false;
+
+            Platform.runLater(() -> {
+                turnLabel.setText("Replay finished");
+                // punkty ZOSTAJĄ ukryte
+            });
+            return;
+        }
+
+
 
         if (msg.startsWith("START")) {
             myColor = Color.valueOf(msg.split(" ")[1]);
@@ -206,6 +276,7 @@ public class GoBoardDemo extends Application {
         }
 
         if (msg.startsWith("MOVE")) {
+            if (replayMode) return;
             String[] p = msg.split(" ");
             Color c = Color.valueOf(p[1]);
             int x = Integer.parseInt(p[2]);
@@ -232,32 +303,39 @@ public class GoBoardDemo extends Application {
         }
 
         if (msg.startsWith("GAME_END")) {
-    String[] parts = msg.split(" ");
-    // Format: GAME_END blackScore whiteScore winner
-    String bScore = parts[1];
-    String wScore = parts[2];
-    String winnerName = parts[3];
 
-    Platform.runLater(() -> {
-        // Blokada przycisków
-        acceptButton.setDisable(true);
-        continueButton.setDisable(true);
-        scoringPhase = false;
-        if(myColor == Color.BLACK){
-        myCapturedLabel.setText("You: " + bScore);
-        opponentCapturedLabel.setText("Opponent: " + wScore);
-        }else{
-           myCapturedLabel.setText("You: " + wScore);
-        opponentCapturedLabel.setText("Opponent: " + bScore); 
+            // ❗ JEŚLI JESTEŚMY W REPLAY – IGNORUJEMY
+            if (replayMode) {
+                return;
+            }
+
+            String[] parts = msg.split(" ");
+            String bScore = parts[1];
+            String wScore = parts[2];
+            String winnerName = parts[3];
+
+            Platform.runLater(() -> {
+                acceptButton.setDisable(true);
+                continueButton.setDisable(true);
+                scoringPhase = false;
+
+                playGameStoryButton.setDisable(false);
+                replayId.setDisable(false);
+
+                if (myColor == Color.BLACK) {
+                    myCapturedLabel.setText("You: " + bScore);
+                    opponentCapturedLabel.setText("Opponent: " + wScore);
+                } else {
+                    myCapturedLabel.setText("You: " + wScore);
+                    opponentCapturedLabel.setText("Opponent: " + bScore);
+                }
+
+                winner = myColor.toString().equals(winnerName);
+                updateWinLabel();
+            });
+            return;
         }
-        
-        // Możesz też użyć istniejącej metody do pokazania dużego napisu na środku
-        winner = (myColor.toString().equals(winnerName));
-        updateWinLabel(); 
-        
-    });
-    return;
-}
+
 
         if (msg.startsWith("PASS")) {
             Color c = Color.valueOf(msg.split(" ")[1]);
@@ -270,6 +348,12 @@ public class GoBoardDemo extends Application {
             winner = c != myColor;
             updateWinLabel();
         }
+    }
+
+    private void clearBoard() {
+        for (int x = 0; x < BOARD_SIZE; x++)
+            for (int y = 0; y < BOARD_SIZE; y++)
+                board[x][y] = Color.EMPTY;
     }
 
     private void loadBoard(String s) {
@@ -392,6 +476,7 @@ public class GoBoardDemo extends Application {
 
     private void handleBoardMessage(String msg) {
 
+        clearBoard();
     // reset oznaczeń
     for (int x = 0; x < BOARD_SIZE; x++)
         for (int y = 0; y < BOARD_SIZE; y++)

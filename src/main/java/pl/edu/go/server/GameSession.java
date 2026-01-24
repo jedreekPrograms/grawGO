@@ -10,6 +10,7 @@ import pl.edu.go.model.Point;
 import pl.edu.go.model.GameState.Status;
 import pl.edu.go.model.Color;
 import pl.edu.go.model.Board;
+import pl.edu.go.server.persistence.entity.GameEntity;
 
 import java.util.Objects;
 /**
@@ -23,23 +24,10 @@ public class GameSession {
     private final GameState game;
     private boolean sessionEnded = false;
     private final CommandRegistry registry;
-    /*int licznikPass = 0;
-
-    public int getLicznikPass() {
-        return licznikPass;
-    }
-
-    public void setLicznikPass(int licznikPass) {
-        this.licznikPass = licznikPass;
-        if (licznikPass == 2) {
-            System.out.println("SCoring Session");
-            this.game.setStatus(Status.STOPPED);
-            sendToBoth("STOPPED");
-        }
-    }*/
-
-    // Fabryka ruchów do tworzenia obiektów Move
     private final MoveFactory moveFactory = new MoveFactory();
+
+    private GameEntity gameEntity;
+    private int moveCounter = 0;
 
     public GameSession(ClientConnection whitePlayer, ClientConnection blackPlayer, int boardSize, CommandRegistry registry) {
         this.whitePlayer = whitePlayer;
@@ -171,5 +159,17 @@ public class GameSession {
             return false;
         }
         return command.execute(args, this, sender);
+    }
+
+    public void setGameEntity(GameEntity g) {
+        this.gameEntity = g;
+    }
+
+    public GameEntity getGameEntity() {
+        return gameEntity;
+    }
+
+    public int nextMoveNumber() {
+        return ++moveCounter;
     }
 }

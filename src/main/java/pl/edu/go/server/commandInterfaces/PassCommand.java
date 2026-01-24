@@ -7,6 +7,10 @@ import pl.edu.go.model.MoveFactory;
 import pl.edu.go.model.Move.Type;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
+import pl.edu.go.server.persistence.PersistenceApplication;
+import pl.edu.go.server.persistence.entity.MoveType;
+import pl.edu.go.server.persistence.service.GamePersistenceService;
+
 /**
  * Komenda rezygnacji (pass) w grze Go.
  * Gracz rezygnuje z wykonania ruchu w danej turze.
@@ -37,7 +41,15 @@ public class PassCommand implements GameCommand {
 
         // 2. Wysyłamy info o pasie
         session.sendToBoth("PASS " + color);
-
+        GamePersistenceService ps = PersistenceApplication.getBean(GamePersistenceService.class);
+        ps.saveMove(
+                session.getGameEntity(),
+                session.nextMoveNumber(),
+                null,
+                null,
+                color,
+                MoveType.PASS
+        );
         // 3. Sprawdzamy, jaki jest status gry PO wykonaniu ruchu
         if (game.getStatus() == GameState.Status.STOPPED) {
             // Jeśli gra weszła w stan oznaczania kamieni -> wysyłamy STOPPED

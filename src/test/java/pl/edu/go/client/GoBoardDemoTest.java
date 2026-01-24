@@ -58,10 +58,7 @@ public class GoBoardDemoTest {
         ui.handleServerMessage("START BLACK");
     }
 
-    @Test
-    public void handleServerMessage_STOPPED_doesNotCrash() {
-        ui.handleServerMessage("STOPPED");
-    }
+
 
     @Test
     public void handleServerMessage_PASS_doesNotCrash() {

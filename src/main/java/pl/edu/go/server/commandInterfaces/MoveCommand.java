@@ -7,6 +7,10 @@ import pl.edu.go.model.MoveFactory;
 import pl.edu.go.server.GameSession;
 import pl.edu.go.server.networkInterfaces.ClientConnection;
 import pl.edu.go.model.GameState;
+import pl.edu.go.server.persistence.PersistenceApplication;
+import pl.edu.go.server.persistence.entity.MoveType;
+import pl.edu.go.server.persistence.service.GamePersistenceService;
+
 /**
  * Implementacja komendy wykonania ruchu w grze Go.
  * Odpowiada za przesłanie ruchu do sesji, walidację oraz powiadomienie graczy.
@@ -45,8 +49,17 @@ public class MoveCommand implements GameCommand {
         }
         int captured = session.getGame().getBoard().getTotalCaptured();
         session.sendToBoth("MOVE " + color + " " + x + " " + y + " " + captured);
+
+        GamePersistenceService ps = PersistenceApplication.getBean(GamePersistenceService.class);
+        ps.saveMove(
+                session.getGameEntity(),
+                session.nextMoveNumber(),
+                x, y,
+                color,
+                MoveType.MOVE
+        );
         session.sendBoardToBoth();
-        //session.setLicznikPass(0);
+
 
         return true;
     }
