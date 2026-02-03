@@ -8,7 +8,7 @@ import pl.edu.go.model.Color;
 import pl.edu.go.server.persistence.PersistenceApplication;
 import pl.edu.go.server.persistence.entity.GameEntity;
 import pl.edu.go.server.persistence.service.GamePersistenceService;
-
+import pl.edu.go.server.bot.*;
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -116,5 +116,30 @@ public class MatchmakingServer {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static synchronized void startBotGame(ClientConnection player) {
+        waitingPlayers.remove(player);
+    
+        CommandRegistry registry = new CommandRegistry();
+        registry.register("MOVE", new pl.edu.go.server.commandInterfaces.MoveCommand());
+        registry.register("PASS", new pl.edu.go.server.commandInterfaces.PassCommand());
+        registry.register("RESIGN", new pl.edu.go.server.commandInterfaces.ResignCommand());
+        registry.register("FINAL", new pl.edu.go.server.commandInterfaces.FinalCommand());
+        registry.register("DEAD", new DeadCommand());
+        registry.register("CONTINUE", new ContinueCommand());
+        registry.register("ACCEPT", new AcceptCommand());
+        registry.register("PLAYSTORE", new PlayStoreCommand());
+        BotStrategy strategy = new HeuristicBot();
+        BotConnection bot = new BotConnection(strategy);
+        GamePersistenceService ps = PersistenceApplication.getBean(GamePersistenceService.class);
+
+        GameEntity gameEntity = ps.startGame(9);
+        GameSession session = new GameSession(player, bot, 9, registry);
+        session.setGameEntity(gameEntity);
+        player.setGameSession(session, Color.WHITE);
+        bot.setGameSession(session, Color.BLACK);
+    
+        session.start();
     }
 }

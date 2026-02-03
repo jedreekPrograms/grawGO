@@ -35,11 +35,6 @@
     <dependencies>
 
 
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>
-            <version> 21</version>
-        </dependency>
 
         <!-- JUnit 4 -->
         <dependency>

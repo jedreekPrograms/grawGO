@@ -67,11 +67,12 @@ public class ClientHandler implements Runnable, ClientConnection {
             String msg;
             // Odczyt linii tekstu do momentu rozłączenia lub błędu
             while ((msg = in.readLine()) != null) {
+                if (msg.equalsIgnoreCase("BOT")) {
+                    MatchmakingServer.startBotGame(this);
+                    continue;
+                }
                 if (session != null) {
-                    // Przekazanie surowego komunikatu do logiki sesji
                     session.onMessage(this, msg);
-                } else {
-                    System.out.println("Wiadomość przed przypisaniem do sesji: " + msg);
                 }
             }
         } catch (IOException e) {

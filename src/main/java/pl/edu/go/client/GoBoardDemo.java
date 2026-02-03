@@ -83,10 +83,12 @@ public class GoBoardDemo extends Application {
         acceptButton.getStyleClass().add("accept-button");
         acceptButton.setDisable(true);
 
-        continueButton = new Button("CONTINUE");
+        continueButton = new Button("CONTdfsf");
         continueButton.getStyleClass().add("continue-button");
         continueButton.setDisable(true);
 
+        Button botButton = new Button("PLAY vs BOT");
+        botButton.getStyleClass().add("bot-button");
 
         turnLabel = new Label("Waiting for opponent...");
         turnLabel.getStyleClass().add("title-label");
@@ -108,7 +110,7 @@ public class GoBoardDemo extends Application {
         capturedBox.getStyleClass().addAll("card", "side-panel");
 
         VBox statusBox = new VBox(6, turnLabel, colorLabel);
-        HBox actionsBox = new HBox(10, passButton, resignButton, acceptButton, continueButton, playGameStoryButton, replayId);
+        HBox actionsBox = new HBox(10, passButton, resignButton, acceptButton, continueButton, botButton, playGameStoryButton, replayId);
 
 
         HBox infoBox = new HBox(20, statusBox, actionsBox, passLabel);
@@ -119,6 +121,7 @@ public class GoBoardDemo extends Application {
         resignButton.setOnAction(e -> client.sendResign());
         acceptButton.setOnAction(e -> client.sendAccept());
         continueButton.setOnAction(e -> client.sendContinue());
+        botButton.setOnAction(e -> { client.sendBot(); botButton.setDisable(true);});
         playGameStoryButton.setOnAction(e ->client.sendPlayStore(Integer.parseInt(replayId.getText())));
 
 

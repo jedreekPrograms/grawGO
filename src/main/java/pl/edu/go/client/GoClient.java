@@ -77,6 +77,9 @@ public class GoClient {
         api.send("CONTINUE");
     }
 
+    public void sendBot(){
+        api.send("BOT");
+    }
     public void sendPlayStore(int gameId) {
         api.send("PLAYSTORE " + gameId);
     }
