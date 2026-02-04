@@ -10,7 +10,7 @@ import java.util.List;
 public class RandomMoveStrategy implements BotStrategy {
 
     private static final int MAX_ATTEMPTS = 50;
-
+    boolean shouldPass = false;
     @Override
     public String decideMove(GameSession session, Color botColor) {
         GameState game = session.getGame();
@@ -44,25 +44,25 @@ public class RandomMoveStrategy implements BotStrategy {
 
     @Override
     public String onAccept() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'onAccept'");
+        return "ACCEPT";
     }
 
     @Override
     public void onOpponentPass() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'onOpponentPass'");
+        shouldPass = true;
     }
 
     @Override
     public String onGameResumed() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'onGameResumed'");
+        return "PASS";
     }
 
     @Override
     public String onTurn(GameSession session, Color botColor) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'onTurn'");
+        if(shouldPass){
+            shouldPass = false;
+            return "Pass";
+        }
+        return decideMove(session, botColor);
     }
 }

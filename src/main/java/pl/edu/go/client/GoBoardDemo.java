@@ -30,7 +30,7 @@ public class GoBoardDemo extends Application {
     Button acceptButton;
     Button continueButton;
     Button playGameStoryButton;
-
+    Button botButton;
 
     private final Color[][] board = new Color[BOARD_SIZE][BOARD_SIZE];
 
@@ -83,11 +83,11 @@ public class GoBoardDemo extends Application {
         acceptButton.getStyleClass().add("accept-button");
         acceptButton.setDisable(true);
 
-        continueButton = new Button("CONTdfsf");
+        continueButton = new Button("CONTINUE");
         continueButton.getStyleClass().add("continue-button");
         continueButton.setDisable(true);
 
-        Button botButton = new Button("PLAY vs BOT");
+        botButton = new Button("PLAY vs BOT");
         botButton.getStyleClass().add("bot-button");
 
         turnLabel = new Label("Waiting for opponent...");
@@ -233,7 +233,7 @@ public class GoBoardDemo extends Application {
 
         if (msg.startsWith("START")) {
             myColor = Color.valueOf(msg.split(" ")[1]);
-
+            botButton.setDisable(true);
             Platform.runLater(() -> {
                 if (myColor == Color.BLACK) {
                     colorLabel.setText("Your Color: Czarny");

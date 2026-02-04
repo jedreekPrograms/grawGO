@@ -8,9 +8,6 @@ import pl.edu.go.model.Color;
  */
 public interface BotStrategy {
 
-    /**
-     * Zwraca komendę, którą bot chce wykonać (np. "MOVE 3 4", "PASS").
-     */
     String decideMove(GameSession session, Color botColor);
 
     void onOpponentPass();

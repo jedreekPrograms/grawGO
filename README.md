@@ -4,21 +4,21 @@ Prosty program napisany w technologii klient-serwer w języku Java. Obsługuje w
 
 ## Instrukcja gry
 
-Gracze graja do dyspozycji mają interfejs graficzny. W trakcie własnej tury mają możliwość położyć kamień poprzez nacieśnięcie na przecięcie na planszy. Mają również możliwość spasowania lub poddania się za pomocą przysków znajdujących się u góry interfejsu. Jeśli obydwaj gracze spasują jeden po drugim gra przechodzi w tryb uzgadniania wyniku partii. Gracze mogą wtedy klikać na obecne na planszy łańcuchy oznaczając je jako martwe. Jeśli gracze uzgodnią że określili wszystkie martwe łańcuchy i są usatysfakcjonowani stanem planszy to mogą kliknąć przycisk Accept. Jeśli obydwaj gracze zaakceptują stan planszy to wynik partii jest rozstrzygany automatycznie na podstawie terytoriów, martwych łańcuchów i jeńców. Jeśli jeden z graczy nie jest zadowolony ze stanu planszy i chciałby kontynuować gre to może to zrobić klikając przycisk Continue.
+Gracze grajac do dyspozycji mają interfejs graficzny. W trakcie własnej tury mają możliwość położyć kamień poprzez nacieśnięcie na przecięcie na planszy. Mają również możliwość spasowania lub poddania się za pomocą przysków znajdujących się u góry interfejsu. Jeśli obydwaj gracze spasują jeden po drugim gra przechodzi w tryb uzgadniania wyniku partii. Gracze mogą wtedy klikać na obecne na planszy łańcuchy oznaczając je jako martwe. Jeśli gracze uzgodnią że określili wszystkie martwe łańcuchy i są usatysfakcjonowani stanem planszy to mogą kliknąć przycisk Accept. Jeśli obydwaj gracze zaakceptują stan planszy to wynik partii jest rozstrzygany automatycznie na podstawie terytoriów, martwych łańcuchów i jeńców. Jeśli jeden z graczy nie jest zadowolony ze stanu planszy i chciałby kontynuować gre to może to zrobić klikając przycisk Continue. Po zakończonej grze gracze mają możliwość odtwarzania przebiegu parti gier zawartych w bazie danych poprzez podanie ID partii.
 
 ## Działanie programu
 
-Pozwala na wiele rozgrywek między dwoma klientami jednocześnie. Gracze są parowani w kolejności w jakiej połączą się z serwerem. Komunikacja odbywa się za pomocą protokołu TCP. Po wysłaniu komendy klienci otrzymuja adekwatną odpowiedź serwera wraz z zaktualizowanym stanem planszy gry.
+Pozwala na wiele rozgrywek między dwoma klientami jednocześnie. Gracze są parowani w kolejności w jakiej połączą się z serwerem. Jeśli gracz nie chce czekać na sparowanie z innym graczem to ma możliwość rozpoczęcia partii z botem obsługiwanym na serwerze. Komunikacja odbywa się za pomocą protokołu TCP. Po wysłaniu komendy klienci otrzymuja adekwatną odpowiedź serwera wraz z zaktualizowanym stanem planszy gry.
 
 ## Uruchamianie
 
 mvn clean compile
 
 ### Uruchamianie serwera
-java -cp target/classes pl.edu.go.server.MatchmakingServer
+mvn exec:java -Pserver
 
 ### Uruchamianie klienta
-mvn javafx:run
+mvn exec:java -Ppanel
 
 ## Użyte technologie
 
@@ -26,3 +26,4 @@ mvn javafx:run
 - Maven  
 - Junit
 - JavaDoc
+- Spring Framework
